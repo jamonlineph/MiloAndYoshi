@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { LeatherMaterial, ShortFurMaterial } from './CharacterMaterials';
 
 interface MiloModelProps {
   velocityRef: React.MutableRefObject<THREE.Vector3>;
@@ -18,12 +19,12 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
   const legBL = useRef<THREE.Group>(null);
   const legBR = useRef<THREE.Group>(null);
 
-  // Realistic Reddish-Brown Dachshund Colors
-  const coatBlack = "#8A3324"; // Rich reddish-brown main coat
-  const coatTan = "#C86240";   // Lighter red/tan for points
-  const darkBrown = "#0A0A0A";
-  const collarGreen = "#3C8259";
-  const brass = "#D4AF37";
+  const coatBlack = '#713126';
+  const coatTan = '#BB6542';
+  const coatShadow = '#4E231E';
+  const darkBrown = '#211514';
+  const collarGreen = '#3F7B59';
+  const brass = '#D4AF58';
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -106,35 +107,41 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       {/* Main Ribcage / Back (Long) */}
       <mesh castShadow receiveShadow position={[0, 0.12, -0.05]} rotation={[Math.PI / 2, 0, 0]}>
         <capsuleGeometry args={[0.13, 0.45, 16, 16]} />
-        <meshStandardMaterial color={coatBlack} roughness={0.8} />
+        <ShortFurMaterial color={coatBlack} roughness={0.84} bumpScale={0.019} />
+      </mesh>
+
+      {/* A darker dorsal ribbon gives the long coat natural depth. */}
+      <mesh castShadow receiveShadow position={[0, 0.225, -0.08]} rotation={[Math.PI / 2, 0, 0]} scale={[0.9, 1, 0.72]}>
+        <capsuleGeometry args={[0.095, 0.38, 14, 16]} />
+        <ShortFurMaterial color={coatShadow} roughness={0.86} bumpScale={0.016} />
       </mesh>
       
       {/* Deep Chest (Keel) */}
       <mesh castShadow receiveShadow position={[0, 0.06, 0.18]} rotation={[Math.PI / 2.2, 0, 0]}>
         <capsuleGeometry args={[0.14, 0.15, 16, 16]} />
-        <meshStandardMaterial color={coatBlack} roughness={0.8} />
+        <ShortFurMaterial color={coatBlack} roughness={0.84} />
       </mesh>
 
       {/* Tan Chest Points (Classic dachshund markings) */}
       <mesh castShadow receiveShadow position={[0.06, 0.04, 0.26]} rotation={[Math.PI / 2, 0.2, 0]}>
         <capsuleGeometry args={[0.05, 0.08, 16, 16]} />
-        <meshStandardMaterial color={coatTan} roughness={0.9} />
+        <ShortFurMaterial color={coatTan} roughness={0.88} />
       </mesh>
       <mesh castShadow receiveShadow position={[-0.06, 0.04, 0.26]} rotation={[Math.PI / 2, -0.2, 0]}>
         <capsuleGeometry args={[0.05, 0.08, 16, 16]} />
-        <meshStandardMaterial color={coatTan} roughness={0.9} />
+        <ShortFurMaterial color={coatTan} roughness={0.88} />
       </mesh>
 
       {/* Rump / Hindquarters */}
       <mesh castShadow receiveShadow position={[0, 0.13, -0.35]}>
         <sphereGeometry args={[0.14, 16, 16]} />
-        <meshStandardMaterial color={coatBlack} roughness={0.8} />
+        <ShortFurMaterial color={coatBlack} roughness={0.84} />
       </mesh>
       
       {/* Tucked Abdomen (Tan) */}
       <mesh castShadow receiveShadow position={[0, 0.05, -0.15]} rotation={[Math.PI / 2, 0, 0]}>
         <capsuleGeometry args={[0.11, 0.2, 16, 16]} />
-        <meshStandardMaterial color={coatTan} roughness={0.9} />
+        <ShortFurMaterial color={coatTan} roughness={0.88} />
       </mesh>
 
       {/* --- HEAD --- */}
@@ -142,69 +149,81 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
         {/* Skull Dome */}
         <mesh castShadow position={[0, 0.06, 0]}>
           <sphereGeometry args={[0.12, 16, 16]} />
-          <meshStandardMaterial color={coatBlack} roughness={0.7} />
+          <ShortFurMaterial color={coatBlack} roughness={0.82} />
         </mesh>
         
         {/* Long Tapered Muzzle (Black base) */}
         <mesh castShadow position={[0, 0.02, 0.15]} rotation={[Math.PI / 2, 0, 0]}>
           <capsuleGeometry args={[0.07, 0.18, 16, 16]} />
-          <meshStandardMaterial color={coatBlack} roughness={0.7} />
+          <ShortFurMaterial color={coatBlack} roughness={0.82} />
         </mesh>
 
         {/* Tan Muzzle Sides & Jaw */}
         <mesh castShadow position={[0, -0.02, 0.16]} rotation={[Math.PI / 2, 0, 0]}>
           <capsuleGeometry args={[0.065, 0.17, 16, 16]} />
-          <meshStandardMaterial color={coatTan} roughness={0.9} />
+          <ShortFurMaterial color={coatTan} roughness={0.88} />
         </mesh>
         <mesh castShadow position={[0.04, 0.02, 0.14]} rotation={[Math.PI / 2, 0, 0.2]}>
           <capsuleGeometry args={[0.04, 0.14, 16, 16]} />
-          <meshStandardMaterial color={coatTan} roughness={0.9} />
+          <ShortFurMaterial color={coatTan} roughness={0.88} />
         </mesh>
         <mesh castShadow position={[-0.04, 0.02, 0.14]} rotation={[Math.PI / 2, 0, -0.2]}>
           <capsuleGeometry args={[0.04, 0.14, 16, 16]} />
-          <meshStandardMaterial color={coatTan} roughness={0.9} />
+          <ShortFurMaterial color={coatTan} roughness={0.88} />
         </mesh>
         
         {/* Nose (Black) */}
         <mesh castShadow position={[0, 0.05, 0.26]}>
           <sphereGeometry args={[0.035, 16, 16]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.4} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.28} clearcoat={0.7} clearcoatRoughness={0.2} />
         </mesh>
+
+        {/* A small open grin and tongue keep Milo's curious face cheerful. */}
+        <group position={[0, -0.07, 0.255]}>
+          <mesh scale={[0.78, 0.4, 0.28]} castShadow>
+            <sphereGeometry args={[0.065, 14, 10]} />
+            <meshStandardMaterial color="#3E2222" roughness={0.72} />
+          </mesh>
+          <mesh position={[0, -0.032, 0.022]} scale={[0.48, 0.32, 0.17]}>
+            <sphereGeometry args={[0.058, 12, 8]} />
+            <meshStandardMaterial color="#D77D7C" roughness={0.68} />
+          </mesh>
+        </group>
 
         {/* Tan Eyebrow Dots */}
         <mesh castShadow position={[0.06, 0.14, 0.08]} rotation={[-0.2, 0.2, 0]}>
           <capsuleGeometry args={[0.015, 0.02, 8, 8]} />
-          <meshStandardMaterial color={coatTan} roughness={0.9} />
+          <ShortFurMaterial color={coatTan} roughness={0.88} />
         </mesh>
         <mesh castShadow position={[-0.06, 0.14, 0.08]} rotation={[-0.2, -0.2, 0]}>
           <capsuleGeometry args={[0.015, 0.02, 8, 8]} />
-          <meshStandardMaterial color={coatTan} roughness={0.9} />
+          <ShortFurMaterial color={coatTan} roughness={0.88} />
         </mesh>
 
         {/* Eyes (Dark Almond) */}
         <mesh castShadow position={[0.08, 0.08, 0.09]} rotation={[-0.1, 0.3, 0]}>
-          <capsuleGeometry args={[0.018, 0.03, 8, 8]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.2} />
+          <capsuleGeometry args={[0.021, 0.033, 8, 8]} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.42} />
         </mesh>
         <mesh castShadow position={[-0.08, 0.08, 0.09]} rotation={[-0.1, -0.3, 0]}>
-          <capsuleGeometry args={[0.018, 0.03, 8, 8]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.2} />
+          <capsuleGeometry args={[0.021, 0.033, 8, 8]} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.42} />
         </mesh>
         
         {/* Eye Catchlights */}
         <mesh castShadow position={[0.085, 0.09, 0.10]} rotation={[-0.1, 0.3, 0]}>
-          <sphereGeometry args={[0.005, 8, 8]} />
-          <meshStandardMaterial color="white" roughness={0.1} />
+          <sphereGeometry args={[0.007, 8, 8]} />
+          <meshBasicMaterial color="#FFFDF6" />
         </mesh>
         <mesh castShadow position={[-0.085, 0.09, 0.10]} rotation={[-0.1, -0.3, 0]}>
-          <sphereGeometry args={[0.005, 8, 8]} />
-          <meshStandardMaterial color="white" roughness={0.1} />
+          <sphereGeometry args={[0.007, 8, 8]} />
+          <meshBasicMaterial color="#FFFDF6" />
         </mesh>
         
         {/* Collar & Brass Tag */}
         <mesh castShadow position={[0, -0.06, -0.02]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.11, 0.025, 16, 32]} />
-          <meshStandardMaterial color={collarGreen} roughness={0.8} />
+          <LeatherMaterial color={collarGreen} roughness={0.82} />
         </mesh>
         <mesh castShadow position={[0, -0.11, 0.02]} rotation={[0, 0, Math.PI / 2]}>
           <capsuleGeometry args={[0.02, 0.05, 8, 8]} />
@@ -214,16 +233,16 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
         {/* Floppy Broad Ears */}
         {/* Left Ear */}
         <group position={[0.1, 0.05, -0.02]}>
-           <mesh ref={earLRef} castShadow position={[0.03, -0.1, 0]} rotation={[0, 0, -0.1]}>
-             <boxGeometry args={[0.04, 0.22, 0.12]} />
-             <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <mesh ref={earLRef} castShadow position={[0.03, -0.1, 0]} rotation={[0, 0, -0.1]} scale={[0.62, 1, 0.72]}>
+             <capsuleGeometry args={[0.075, 0.18, 10, 12]} />
+             <ShortFurMaterial color={coatShadow} roughness={0.88} />
            </mesh>
         </group>
          {/* Right Ear */}
         <group position={[-0.1, 0.05, -0.02]}>
-           <mesh ref={earRRef} castShadow position={[-0.03, -0.1, 0]} rotation={[0, 0, 0.1]}>
-             <boxGeometry args={[0.04, 0.22, 0.12]} />
-             <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <mesh ref={earRRef} castShadow position={[-0.03, -0.1, 0]} rotation={[0, 0, 0.1]} scale={[0.62, 1, 0.72]}>
+             <capsuleGeometry args={[0.075, 0.18, 10, 12]} />
+             <ShortFurMaterial color={coatShadow} roughness={0.88} />
            </mesh>
         </group>
       </group>
@@ -233,7 +252,7 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       <group ref={tailRef} position={[0, 0.15, -0.48]}>
          <mesh castShadow position={[0, 0.02, -0.12]} rotation={[-Math.PI / 2, 0, 0]}>
            <capsuleGeometry args={[0.02, 0.25, 8, 8]} />
-           <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <ShortFurMaterial color={coatBlack} roughness={0.86} />
          </mesh>
       </group>
 
@@ -242,12 +261,12 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       <group ref={legFL} position={[0.08, 0, 0.18]}>
          <mesh castShadow position={[0, -0.05, 0]}>
            <capsuleGeometry args={[0.035, 0.08, 8, 8]} />
-           <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <ShortFurMaterial color={coatBlack} roughness={0.86} />
          </mesh>
          {/* Tan Paw */}
          <mesh castShadow position={[0, -0.1, 0.02]}>
            <capsuleGeometry args={[0.036, 0.04, 8, 8]} />
-           <meshStandardMaterial color={coatTan} roughness={0.9} />
+           <ShortFurMaterial color={coatTan} roughness={0.88} />
          </mesh>
       </group>
       
@@ -255,12 +274,12 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       <group ref={legFR} position={[-0.08, 0, 0.18]}>
          <mesh castShadow position={[0, -0.05, 0]}>
            <capsuleGeometry args={[0.035, 0.08, 8, 8]} />
-           <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <ShortFurMaterial color={coatBlack} roughness={0.86} />
          </mesh>
          {/* Tan Paw */}
          <mesh castShadow position={[0, -0.1, 0.02]}>
            <capsuleGeometry args={[0.036, 0.04, 8, 8]} />
-           <meshStandardMaterial color={coatTan} roughness={0.9} />
+           <ShortFurMaterial color={coatTan} roughness={0.88} />
          </mesh>
       </group>
 
@@ -268,12 +287,12 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       <group ref={legBL} position={[0.08, 0.02, -0.28]}>
          <mesh castShadow position={[0, -0.06, 0]} rotation={[0.2, 0, 0]}>
            <capsuleGeometry args={[0.04, 0.1, 8, 8]} />
-           <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <ShortFurMaterial color={coatBlack} roughness={0.86} />
          </mesh>
          {/* Tan Paw */}
          <mesh castShadow position={[0, -0.12, 0.02]}>
            <capsuleGeometry args={[0.036, 0.04, 8, 8]} />
-           <meshStandardMaterial color={coatTan} roughness={0.9} />
+           <ShortFurMaterial color={coatTan} roughness={0.88} />
          </mesh>
       </group>
 
@@ -281,12 +300,12 @@ export function MiloModel({ velocityRef, isGrounded }: MiloModelProps) {
       <group ref={legBR} position={[-0.08, 0.02, -0.28]}>
          <mesh castShadow position={[0, -0.06, 0]} rotation={[0.2, 0, 0]}>
            <capsuleGeometry args={[0.04, 0.1, 8, 8]} />
-           <meshStandardMaterial color={coatBlack} roughness={0.8} />
+           <ShortFurMaterial color={coatBlack} roughness={0.86} />
          </mesh>
          {/* Tan Paw */}
          <mesh castShadow position={[0, -0.12, 0.02]}>
            <capsuleGeometry args={[0.036, 0.04, 8, 8]} />
-           <meshStandardMaterial color={coatTan} roughness={0.9} />
+           <ShortFurMaterial color={coatTan} roughness={0.88} />
          </mesh>
       </group>
 

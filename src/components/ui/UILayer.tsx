@@ -36,7 +36,7 @@ export function UILayer() {
           </div>
         ) : (
           <div className="bg-paper w-[280px] p-5 rounded-sm shadow-[8px_8px_0_var(--color-ink)] border border-black/10 pointer-events-auto italic text-sm text-ink opacity-80">
-             Talk to Taro to find out what's new.
+             Find Paula and Jam outside Maple House to begin the day.
           </div>
         )}
         {/* Top Right: Minimap and Pause Button */}

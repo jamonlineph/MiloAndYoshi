@@ -35,24 +35,36 @@ function makeSparkleData() {
 }
 
 // ── Materials (created once, shared) ─────────────────────────────────────────
-const deepWaterMaterial = new THREE.MeshStandardMaterial({
-  color: new THREE.Color('#5C91A8'),
+const deepWaterMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color('#2F7893'),
   transparent: true,
-  opacity: 0.78,
+  opacity: 0.9,
   side: THREE.DoubleSide,
-  flatShading: true,
-  roughness: 0.55,
-  metalness: 0.04,
+  roughness: 0.18,
+  metalness: 0.02,
+  transmission: 0.1,
+  thickness: 2.2,
+  ior: 1.333,
+  clearcoat: 1,
+  clearcoatRoughness: 0.14,
+  reflectivity: 0.72,
+  envMapIntensity: 1.45,
+  attenuationColor: new THREE.Color('#2A7D89'),
+  attenuationDistance: 7,
 });
 
-const surfaceShimmerMaterial = new THREE.MeshStandardMaterial({
-  color: new THREE.Color('#9BD4DF'),
+const surfaceShimmerMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color('#B9E8EF'),
   transparent: true,
-  opacity: 0.24,
+  opacity: 0.14,
   side: THREE.DoubleSide,
-  flatShading: true,
-  roughness: 0.2,
-  metalness: 0.08,
+  roughness: 0.08,
+  metalness: 0.05,
+  clearcoat: 1,
+  clearcoatRoughness: 0.06,
+  envMapIntensity: 1.8,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
 });
 
 const shoreTintMaterial = new THREE.MeshBasicMaterial({
@@ -78,6 +90,13 @@ const sparkleMaterial = new THREE.MeshBasicMaterial({
   opacity: 0.55,
   side: THREE.DoubleSide,
   depthWrite: false,
+});
+
+const seabedMaterial = new THREE.MeshStandardMaterial({
+  color: new THREE.Color('#17475A'),
+  roughness: 1,
+  metalness: 0,
+  envMapIntensity: 0.2,
 });
 
 // ── Geometry (created once, shared) ──────────────────────────────────────────
@@ -196,6 +215,11 @@ export function Water() {
 
   return (
     <group>
+      {/* The dark seabed gives the translucent surface readable depth. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3.6, 0]} material={seabedMaterial} receiveShadow>
+        <circleGeometry args={[182, 72]} />
+      </mesh>
+
       {/* ── Deep water layer ────────────────────────────────────────────── */}
       <mesh
         ref={deepRef}
@@ -241,9 +265,9 @@ export function Water() {
       {/* ── Underwater glow light ───────────────────────────────────────── */}
       <pointLight
         position={[0, -2.5, 0]}
-        color="#89C4D9"
-        intensity={0.3}
-        distance={40}
+        color="#70D1D8"
+        intensity={0.45}
+        distance={46}
         decay={2}
       />
     </group>

@@ -1,680 +1,701 @@
-import { RigidBody, CylinderCollider } from '@react-three/rapier';
-import { NPC } from '../NPC';
-import { useGameStore } from '../../../store/useGameStore';
+import { Html } from '@react-three/drei';
+import { CylinderCollider, MeshCollider, RigidBody } from '@react-three/rapier';
+import { useEffect } from 'react';
 import * as THREE from 'three';
-import { useEffect, useMemo } from 'react';
-
-import { CourierHut, Bakery, MarketStall, WoodenArch } from '../objects/Buildings';
-import { Mailbox, Signpost, Bench, Boat, Barrel, RopeCoil, Clothesline, WellPump, Cart, Bunting, Lantern, Crate, Campfire, ArchBridge, Streetlamp } from '../objects/Props';
-import { Tree, PineTree, FlowerBed, Rock, Bush, TallGrass, Mushroom, PalmTree } from '../objects/Nature';
-import { Seagull, Butterfly, Crab, Fish, Frog, Dragonfly } from '../effects/Animals';
+import { useGameStore } from '../../../store/useGameStore';
+import { HumanNPC } from '../HumanNPC';
+import { NPC } from '../NPC';
+import { Bakery, House, MarketStall, WoodenArch } from '../objects/Buildings';
+import {
+  ArchBridge,
+  Barrel,
+  Bench,
+  Bunting,
+  Campfire,
+  Cart,
+  Clothesline,
+  Crate,
+  Lantern,
+  Mailbox,
+  Signpost,
+  Streetlamp,
+  WellPump,
+} from '../objects/Props';
+import {
+  Bush,
+  FlowerBed,
+  Mushroom,
+  PineTree,
+  Rock,
+  TallGrass,
+  Tree,
+} from '../objects/Nature';
+import { Butterfly, Dragonfly, Frog, Seagull } from '../effects/Animals';
+import { Atmosphere } from '../effects/Atmosphere';
+import {
+  CurvedPath,
+  LandscapeDetail,
+  SculptedIsland,
+  Shoreline,
+  TerrainMound,
+} from './Landscape';
+import { hillGrassMaterial, plazaMaterial, sandMaterial, soilMaterial } from './materials';
 import { Water } from './Water';
 
-// A simple wrapper for static interactable props that the other agent added.
-function CozyInteractable({ id, name, position, text }: { id: string, name: string, position: [number, number, number], text: string }) {
+type Position = [number, number, number];
+
+const WOODLAND_TREES: Array<{ position: Position; pine?: boolean; blossom?: boolean; scale: number }> = [
+  // Cedar Hollow rises behind Maple House instead of forming a tree ring.
+  { position: [-36, 0.78, -27], pine: true, scale: 1.55 },
+  { position: [-31, 0.46, -29], pine: true, scale: 1.25 },
+  { position: [-39, 0.34, -23], scale: 1.35 },
+  { position: [-34, 0.3, -32], pine: true, scale: 1.25 },
+  { position: [-27, 0, -36], scale: 1.25 },
+  { position: [-42, 0, -17], pine: true, scale: 1.35 },
+  // A windbreak gives the market a wooded backdrop while leaving its entrance open.
+  { position: [29, 0, -37], pine: true, scale: 1.35 },
+  { position: [35, 0, -33], scale: 1.25 },
+  { position: [40, 0, -27], pine: true, scale: 1.45 },
+  { position: [43, 0, -19], scale: 1.3 },
+  { position: [35, 0, -25], pine: true, scale: 1.2 },
+  // Meadow Ridge is a clustered grove on a low rise.
+  { position: [36, 0.98, 18], scale: 1.5 },
+  { position: [32, 0.56, 16], pine: true, scale: 1.2 },
+  { position: [40, 0.5, 21], scale: 1.3 },
+  { position: [35, 0.54, 24], blossom: true, scale: 1.25 },
+  { position: [42, 0.18, 13], pine: true, scale: 1.3 },
+  { position: [39, 0.18, 8], scale: 1.2 },
+  // Pond Grove frames the western water without closing off the bridge view.
+  { position: [-42, 0, 9], pine: true, scale: 1.3 },
+  { position: [-44, 0, 18], scale: 1.35 },
+  { position: [-40, 0, 26], pine: true, scale: 1.4 },
+  { position: [-34, 0, 32], scale: 1.25 },
+  { position: [-29, 0, 36], pine: true, scale: 1.25 },
+  // Two small copses frame the lookout while preserving the ocean horizon.
+  { position: [-20, 0, 41], scale: 1.25 },
+  { position: [-13, 0, 43], pine: true, scale: 1.3 },
+  { position: [13, 0, 43], scale: 1.2 },
+  { position: [21, 0, 40], pine: true, scale: 1.3 },
+];
+
+const ORCHARD_TREES: Position[] = [
+  [-28, 0, -14], [-22.5, 0, -15], [-17, 0, -13.5],
+  [-29, 0, -7], [-23, 0, -8], [-16.5, 0, -7],
+  [-27.5, 0, -1], [-21.5, 0, -2], [-16, 0, -1],
+];
+
+interface FenceRunProps {
+  position: Position;
+  length: number;
+  rotation?: number;
+}
+
+function FenceRun({ position, length, rotation = 0 }: FenceRunProps) {
+  const postCount = Math.max(2, Math.ceil(length / 2.2) + 1);
   return (
-    <NPC id={id} name={name} position={position} color="#A8C8D9" type="secret" onInteract={() => {
-        useGameStore.getState().setDialog('System', text);
-    }} />
+    <group position={position} rotation={[0, rotation, 0]}>
+      {[0.32, 0.67].map((height) => (
+        <mesh key={height} position={[0, height, 0]} castShadow>
+          <boxGeometry args={[length, 0.11, 0.13]} />
+          <meshStandardMaterial color="#8A6241" roughness={0.94} />
+        </mesh>
+      ))}
+      {Array.from({ length: postCount }).map((_, index) => (
+        <group key={index} position={[-length / 2 + (index * length) / (postCount - 1), 0, 0]}>
+          <mesh position={[0, 0.5, 0]} castShadow>
+            <boxGeometry args={[0.17, 1, 0.17]} />
+            <meshStandardMaterial color="#6E4B34" roughness={0.95} />
+          </mesh>
+          <mesh position={[0, 1.04, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+            <coneGeometry args={[0.16, 0.18, 4]} />
+            <meshStandardMaterial color="#6E4B34" roughness={0.95} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+interface InteractionAnchorProps {
+  id: string;
+  label: string;
+  position: Position;
+  onInteract: () => void;
+  showQuestMarker?: boolean;
+}
+
+function InteractionAnchor({ id, label, position, onInteract, showQuestMarker = false }: InteractionAnchorProps) {
+  const isClosest = useGameStore((state) => state.closestInteractableId === id);
+
+  useEffect(() => {
+    const store = useGameStore.getState();
+    store.registerInteractable(id, { x: position[0], y: position[1], z: position[2] }, label, onInteract);
+    return () => store.unregisterInteractable(id);
+  }, [id, label, onInteract, position]);
+
+  return (
+    <group position={position}>
+      {isClosest && (
+        <Html position={[0, 1.2, 0]} center>
+          <div className="bg-paper px-3 py-2 shadow-[3px_3px_0_var(--color-ink)] text-xs font-bold text-ink whitespace-nowrap pointer-events-none border-2 border-ink">
+            {label}
+          </div>
+        </Html>
+      )}
+      {showQuestMarker && (
+        <Html position={[0, 1.55, 0]} center>
+          <div className="text-3xl animate-bounce text-terracotta drop-shadow-[2px_2px_0_var(--color-ink)] font-display font-extrabold">!</div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+function WelcomeBasket({ opened }: { opened: boolean }) {
+  return (
+    <group position={[-1.7, 0, -14.2]} rotation={[0, 0.35, 0]}>
+      <mesh position={[0, 0.25, 0]} castShadow>
+        <cylinderGeometry args={[0.42, 0.34, 0.45, 12]} />
+        <meshStandardMaterial color="#A87848" roughness={0.92} />
+      </mesh>
+      <mesh position={[0, 0.52, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <torusGeometry args={[0.32, 0.035, 8, 20, Math.PI]} />
+        <meshStandardMaterial color="#704A2F" roughness={0.9} />
+      </mesh>
+      {!opened && (
+        <>
+          <mesh position={[-0.13, 0.48, 0]} rotation={[0.2, 0.1, -0.1]} castShadow>
+            <boxGeometry args={[0.22, 0.1, 0.26]} />
+            <meshStandardMaterial color="#D96C5B" roughness={0.85} />
+          </mesh>
+          <mesh position={[0.15, 0.48, 0.02]} rotation={[-0.1, -0.2, 0.08]} castShadow>
+            <boxGeometry args={[0.22, 0.1, 0.26]} />
+            <meshStandardMaterial color="#E8DCC4" roughness={0.9} />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+function PicnicBlanket() {
+  return (
+    <group position={[7, 0.04, 7.5]} rotation={[0, -0.18, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[5, 4]} />
+        <meshStandardMaterial color="#D96C5B" roughness={0.96} />
+      </mesh>
+      {[-1.5, -0.5, 0.5, 1.5].flatMap((x) =>
+        [-1.5, -0.5, 0.5, 1.5].map((z) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.01, z]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.82, 0.82]} />
+            <meshStandardMaterial color={(Math.round(x + z) % 2 === 0) ? '#F5E9D2' : '#C84F48'} roughness={0.98} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[1.8, 0.22, 1.2]} castShadow>
+        <cylinderGeometry args={[0.38, 0.3, 0.4, 12]} />
+        <meshStandardMaterial color="#A87848" roughness={0.92} />
+      </mesh>
+      <mesh position={[1.8, 0.48, 1.2]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <torusGeometry args={[0.28, 0.03, 8, 20, Math.PI]} />
+        <meshStandardMaterial color="#704A2F" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+function GardenPatch({ watered }: { watered: boolean }) {
+  return (
+    <group position={[9, 0, -17]}>
+      {[0, 1, 2].map((row) => (
+        <group key={row} position={[-2 + row * 2, 0, 0]}>
+          <mesh material={soilMaterial} position={[0, 0.06, 0]} receiveShadow>
+            <boxGeometry args={[1.35, 0.12, 5]} />
+          </mesh>
+          {watered && [-1.6, -0.8, 0, 0.8, 1.6].map((z, index) => (
+            <group key={z} position={[0, 0.16, z]}>
+              <mesh rotation={[0, 0, -0.48]} castShadow><capsuleGeometry args={[0.035, 0.22, 6, 6]} /><meshStandardMaterial color="#5D9B58" roughness={0.9} /></mesh>
+              <mesh rotation={[0, 0, 0.48]} castShadow><capsuleGeometry args={[0.035, 0.22, 6, 6]} /><meshStandardMaterial color={index % 2 ? '#79B76E' : '#4F8D4D'} roughness={0.9} /></mesh>
+            </group>
+          ))}
+        </group>
+      ))}
+      <WellPump position={[4.2, 0, 0]} scale={0.75} />
+      <Barrel position={[4.2, 0, 1.5]} scale={0.7} />
+    </group>
+  );
+}
+
+function PawToken({ position, found, color }: { position: Position; found: boolean; color: string }) {
+  const opacity = found ? 0.3 : 1;
+  return (
+    <group position={position} rotation={[-Math.PI / 2, 0, 0.15]}>
+      <mesh scale={[0.7, 0.85, 0.18]} castShadow>
+        <sphereGeometry args={[0.42, 12, 10]} />
+        <meshStandardMaterial color={color} transparent opacity={opacity} roughness={0.88} />
+      </mesh>
+      {[[-0.38, 0.42], [-0.13, 0.58], [0.14, 0.58], [0.4, 0.4]].map(([x, y], index) => (
+        <mesh key={index} position={[x, y, 0]} scale={[0.25, 0.3, 0.18]} castShadow>
+          <sphereGeometry args={[0.42, 10, 8]} />
+          <meshStandardMaterial color={color} transparent opacity={opacity} roughness={0.88} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function QuestLantern({ position, lit }: { position: Position; lit: boolean }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.48, 0]} castShadow><cylinderGeometry args={[0.04, 0.055, 0.95, 8]} /><meshStandardMaterial color="#574334" roughness={0.86} /></mesh>
+      <mesh position={[0, 1.08, 0]} castShadow><cylinderGeometry args={[0.17, 0.12, 0.35, 8]} /><meshStandardMaterial color={lit ? '#FFD785' : '#8F8575'} emissive={lit ? '#FFB84F' : '#000000'} emissiveIntensity={lit ? 1.8 : 0} roughness={0.3} /></mesh>
+      <mesh position={[0, 1.3, 0]} castShadow><coneGeometry args={[0.23, 0.18, 8]} /><meshStandardMaterial color="#3D3028" roughness={0.9} /></mesh>
+      {lit && <pointLight position={[0, 1.1, 0]} color="#FFB85C" intensity={1.25} distance={7} decay={2} />}
+    </group>
+  );
+}
+
+function FlowerQuestSpot({ position, color, picked }: { position: Position; color: string; picked: boolean }) {
+  return (
+    <group position={position} scale={picked ? 0.5 : 1}>
+      <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.025, 0.04, 0.6, 7]} /><meshStandardMaterial color="#4D8C4F" roughness={0.9} /></mesh>
+      {[0, 1, 2, 3, 4].map((index) => {
+        const angle = (index / 5) * Math.PI * 2;
+        return (
+          <mesh key={index} position={[Math.cos(angle) * 0.15, 0.62, Math.sin(angle) * 0.15]} scale={[1, 0.45, 1]} castShadow>
+            <sphereGeometry args={[0.13, 9, 7]} />
+            <meshStandardMaterial color={color} roughness={0.82} />
+          </mesh>
+        );
+      })}
+      <mesh position={[0, 0.62, 0]} castShadow><sphereGeometry args={[0.09, 9, 7]} /><meshStandardMaterial color="#F2C14E" roughness={0.75} /></mesh>
+    </group>
   );
 }
 
 export function PawprintBay() {
-  const quests = useGameStore(state => state.quests);
-  const activeQuestId = useGameStore(state => state.activeQuestId);
-  const setActiveQuest = useGameStore(state => state.setActiveQuest);
-  const advanceQuestObjective = useGameStore(state => state.advanceQuestObjective);
-  const setDialog = useGameStore(state => state.setDialog);
-  const setMiloState = useGameStore(state => state.setMiloState);
-  
-  const handleTaroInteract = () => {
-     const prologue = quests['prologue'];
-     const quest1 = quests['quest1'];
-     const quest6 = quests['quest6'];
+  const quests = useGameStore((state) => state.quests);
+  const activeQuestId = useGameStore((state) => state.activeQuestId);
+  const worldFlags = useGameStore((state) => state.worldFlags);
+  const setDialog = useGameStore((state) => state.setDialog);
+  const setActiveQuest = useGameStore((state) => state.setActiveQuest);
+  const advanceQuestObjective = useGameStore((state) => state.advanceQuestObjective);
+  const setQuestStatus = useGameStore((state) => state.setQuestStatus);
+  const setWorldFlag = useGameStore((state) => state.setWorldFlag);
+  const addStamp = useGameStore((state) => state.addStamp);
+  const setTimeOfDay = useGameStore((state) => state.setTimeOfDay);
 
-     if (prologue && prologue.status === 'available') {
-         if (!activeQuestId) {
-             setDialog('Taro', 'Yoshi, my boy! Are you ready for your first delivery? Put on your neckerchief in your wardrobe, practice a bark, and save your progress at the bell!', () => {
-                 setActiveQuest('prologue');
-                 advanceQuestObjective('prologue');
-             });
-         } else if (activeQuestId === 'prologue') {
-             if (prologue.currentObjectiveIndex === 1) {
-                 setDialog('Taro', 'Good. Now head to the wardrobe.');
-             } else {
-                 setDialog('Taro', 'Remember: Red neckerchief, bark, and ring the bell.');
-             }
-         }
-     } else if (quest1 && quest1.status === 'available' && !activeQuestId) {
-         setDialog('Taro', 'Excellent work on your training. Sora at Bunrise Bakery was asking for a courier. Go see what she needs.');
-     } else if (quest6 && quest6.status === 'available' && !activeQuestId) {
-         setDialog('Taro', 'The island is feeling whole again... I have one final letter. It\'s weathered and old. It belongs to Aoi.', () => {
-              setActiveQuest('quest6');
-              advanceQuestObjective('quest6');
-         });
-     } else if (activeQuestId === 'quest6' && quest6?.currentObjectiveIndex === 1) {
-         setDialog('Taro', 'I\'ve kept this letter safe for a long time. Take Milo through the Storm Path, let the wind guide you.', () => {
-             advanceQuestObjective('quest6');
-         });
-     } else {
-         setDialog('Taro', 'Slow paws still reach the right door, pup.');
-     }
+  const homecoming = quests.homecoming;
+  const picnic = quests.picnic;
+  const garden = quests.garden;
+  const memories = quests.memories;
+  const lanterns = quests.lanterns;
+
+  const startQuest = (id: string, speaker: string, text: string) => {
+    setDialog(speaker, text, () => {
+      setActiveQuest(id);
+      advanceQuestObjective(id);
+    });
   };
 
-  const handleSoraInteract = () => {
-     const quest1 = quests['quest1'];
-     if (quest1 && quest1.status === 'available') {
-         if (!activeQuestId) {
-             setDialog('Sora', 'Oh, Yoshi! Perfect timing. Aoi at the lighthouse must be so cold up there alone.', () => {
-                 setDialog('Sora', 'Could you bring her this warm melon bun? Careful! It is carrying my whole heart and also too much butter.', () => {
-                     setActiveQuest('quest1');
-                     useGameStore.getState().addItem('warm_melon_bun', 1);
-                     useGameStore.getState().advanceQuestObjective('quest1');
-                 });
-             });
-         } else if (activeQuestId === 'quest1') {
-             if (quest1.currentObjectiveIndex === 1) {
-                 setDialog('Sora', 'Hurry now! Straight to the lighthouse before it cools down!');
-             }
-         }
-     } else if (quest1 && quest1.status === 'completed') {
-         setDialog('Sora', 'Thank you again for delivering that bun, Yoshi!');
-     } else {
-         setDialog('Sora', 'Nothing baking right now, but it smells nice, doesn\'t it?');
-     }
+  const handlePaulaInteract = () => {
+    if (homecoming?.status === 'available' && !activeQuestId) {
+      startQuest('homecoming', 'Paula', 'Good morning, Yoshi! Jam and I made a welcome basket for you and Milo. Have a sniff on the porch, then meet us by the garden gate. No hurry—today belongs to you two.');
+      return;
+    }
+    if (activeQuestId === 'picnic' && picnic?.currentObjectiveIndex === 4) {
+      setDialog('Paula', 'These are the exact colors from our favorite walks. Let us put them beside the picnic blanket so everyone can enjoy them.', () => {
+        advanceQuestObjective('picnic');
+        setQuestStatus('garden', 'available');
+        addStamp('Sunshine Picnic Stamp');
+      });
+      return;
+    }
+    if (garden?.status === 'available' && !activeQuestId) {
+      startQuest('garden', 'Paula', 'Milo keeps visiting the sunny patch beside the house. I think he wants a garden of his own. Could you fetch the seed packet from Sora’s market cart?');
+      return;
+    }
+    if (lanterns?.status === 'available' && !activeQuestId) {
+      startQuest('lanterns', 'Paula', 'The village always feels coziest when the lanterns lead home. Light the porch, garden, and pond lanterns, then come back before sunset.');
+      return;
+    }
+    if (activeQuestId === 'lanterns' && lanterns?.currentObjectiveIndex === 4) {
+      setDialog('Paula', 'There you both are. Every light is glowing, Jam has the kettle on, and home is exactly where it should be.', () => {
+        advanceQuestObjective('lanterns');
+        addStamp('Home Together Stamp');
+        setTimeOfDay('sunset');
+      });
+      return;
+    }
+    setDialog('Paula', activeQuestId ? 'You and Milo make even the smallest errand feel like an adventure.' : 'Come sit with us whenever your paws need a rest.');
   };
 
-  const handleAoiInteract = () => {
-      const quest1 = quests['quest1'];
-      const quest6 = quests['quest6'];
-      if (activeQuestId === 'quest1' && quest1 && quest1.currentObjectiveIndex === 1) {
-          setDialog('Aoi', 'Oh... a visitor? And what is this... a warm melon bun from Sora?', () => {
-              useGameStore.getState().removeItem('warm_melon_bun', 1);
-              setDialog('Aoi', 'The lighthouse is easy to keep. Hope is the difficult part. But this... is very kind of her.', () => {
-                  useGameStore.getState().advanceQuestObjective('quest1');
-                  useGameStore.getState().setQuestStatus('quest2', 'available');
-                  useGameStore.getState().addStamp('Bakery Stamp');
-                  setDialog('System', 'You completed "Warm Before the Wind"! Rewards: Bakery Stamp & Sailor Cap');
-              });
-          });
-      } else if (activeQuestId === 'quest6' && quest6 && quest6.currentObjectiveIndex === 4) {
-          setDialog('Aoi', 'You made it up the storm path... and Milo is with you. You have a letter?', () => {
-               setDialog('Aoi', '(She unfolds the weathered paper with trembling wings.)', () => {
-                    setDialog('Aoi', '"Even when the storm breaks the bridge, the light reaches the shore." ...It is from the first Lighthouse Keeper.', () => {
-                         advanceQuestObjective('quest6');
-                         setDialog('System', 'You completed all deliveries! Pawprint Bay is connected once more. Congratulations!');
-                    });
-               });
-          });
-      } else {
-          setDialog('Aoi', 'The sea looks restless today...');
-      }
+  const handleJamInteract = () => {
+    if (activeQuestId === 'homecoming' && homecoming?.currentObjectiveIndex === 2) {
+      setDialog('Jam', 'There are my two trail buddies! Paula has breakfast ready, but first—look at that happy tail. Welcome home, boys.', () => {
+        advanceQuestObjective('homecoming');
+        setQuestStatus('picnic', 'available');
+        addStamp('Maple House Stamp');
+      });
+      return;
+    }
+    if (picnic?.status === 'available' && !activeQuestId) {
+      startQuest('picnic', 'Jam', 'I want to surprise Paula with a picnic. Help me gather three little flowers: a buttercup, a pond bluebell, and one pink orchard blossom. Milo knows every shortcut.');
+      return;
+    }
+    if (activeQuestId === 'garden' && garden?.currentObjectiveIndex === 3) {
+      setDialog('Jam', 'Milo grew those? I knew he had excellent taste in digging spots. We will make a tiny wooden sign for his garden.', () => {
+        advanceQuestObjective('garden');
+        setQuestStatus('memories', 'available');
+        addStamp('Little Sprout Stamp');
+      });
+      return;
+    }
+    if (memories?.status === 'available' && !activeQuestId) {
+      startQuest('memories', 'Jam', 'I placed three wooden pawprints along our favorite family walk: pond, orchard, and hilltop. Find them in that order and bring Milo back to me.');
+      return;
+    }
+    if (activeQuestId === 'memories' && memories?.currentObjectiveIndex === 4) {
+      setDialog('Jam', 'You found the whole trail. Those places mattered before, but they feel even better now that the four of us have walked them together.', () => {
+        advanceQuestObjective('memories');
+        setQuestStatus('lanterns', 'available');
+        addStamp('Family Trail Stamp');
+      });
+      return;
+    }
+    setDialog('Jam', activeQuestId ? 'Take your time. The best walks are the ones where you stop to sniff everything.' : 'I saved a spot for both of you by the fire.');
   };
 
-  const handleMiloInteract = () => {
-     const quest2 = quests['quest2'];
-     if (!useGameStore.getState().hasMilo) {
-         if (activeQuestId === 'quest2' && quest2.currentObjectiveIndex === 1) {
-             setDialog('Milo', '...I shouldn\'t be seen. The storm... it was my fault. I chose the wrong route. I even lost my brass tag to the crabs.', () => {
-                  advanceQuestObjective('quest2');
-             });
-         } else if (activeQuestId === 'quest2' && quest2.currentObjectiveIndex === 3) {
-             setDialog('Yoshi', '(You tilt your head, assuring him it\'s okay, and wag your whole body. You show him his lost brass tag.)', () => {
-                  setDialog('Milo', 'My tag! You... you want me to help you deliver mail? Are you sure?', () => {
-                       advanceQuestObjective('quest2');
-                       setDialog('System', 'Milo has joined you as your companion! He will follow you on deliveries.', () => {
-                           setMiloState(true);
-                           useGameStore.getState().setQuestStatus('quest3', 'available');
-                       });
-                  });
-             });
-         } else {
-             setDialog('Milo', '(A sad little dachshund is hiding behind the post.)');
-         }
-     } else {
-         setDialog('Milo', 'Let\'s find those letters, Yoshi!');
-     }
+  const collectFlower = (index: number, flag: string, name: string) => {
+    if (activeQuestId !== 'picnic' || picnic?.currentObjectiveIndex !== index) {
+      setDialog('Yoshi', worldFlags[flag] ? `(The ${name} still smells lovely.)` : `(A lovely ${name}. Maybe it is for another part of the walk.)`);
+      return;
+    }
+    setWorldFlag(flag, true);
+    useGameStore.getState().addItem('picnic-flower', 1);
+    setDialog('Yoshi', `(You carefully pick the ${name}. Milo approves with one very serious sniff.)`, () => advanceQuestObjective('picnic'));
   };
 
-  const handleNoriInteract = () => {
-     const quest2 = quests['quest2'];
-     const quest5 = quests['quest5'];
-     if (quest2 && quest2.status === 'available' && !activeQuestId) {
-         setDialog('Nori', 'The bridge has been out since the storm... But lately, I\'ve heard scratching beneath the dock. Can you investigate?', () => {
-             setActiveQuest('quest2');
-             advanceQuestObjective('quest2');
-         });
-     } else if (activeQuestId === 'quest2') {
-         if (quest2.currentObjectiveIndex === 1) {
-             setDialog('Nori', 'Look under the old dock. Something small is moving down there.');
-         } else {
-             setDialog('Nori', 'I hope you find whatever is making that noise beneath my boots.');
-         }
-     } else if (quest5 && quest5.status === 'available' && !activeQuestId) {
-          setDialog('Nori', 'We need to repair the storm path to reach the western cliffs.', () => {
-               setDialog('Nori', 'We need driftwood from Seaglass Beach and sturdy rope.', () => {
-                   setActiveQuest('quest5');
-                   advanceQuestObjective('quest5');
-               });
-          });
-     } else if (activeQuestId === 'quest5') {
-          if (quest5.currentObjectiveIndex === 1) {
-              setDialog('Nori', 'Check Seaglass Beach for driftwood, and the Old Dock for rope.');
-          } else {
-              setDialog('Nori', 'We need to fix that bridge.');
-          }
-     } else {
-         setDialog('Nori', 'Tides come and go, but lifting these boxes never stops.');
-     }
+  const findMemory = (index: number, flag: string, place: string) => {
+    if (activeQuestId !== 'memories' || memories?.currentObjectiveIndex !== index) {
+      setDialog('Jam’s Pawprint', worldFlags[flag] ? `(You remember finding this one near ${place}.)` : `(A carved pawprint points farther along the family trail.)`);
+      return;
+    }
+    setWorldFlag(flag, true);
+    setDialog('Jam’s Pawprint', `(A tiny carving reads: “For the walks that always bring us back together.”)`, () => advanceQuestObjective('memories'));
   };
 
-  const handleCrabInteract = () => {
-      const quest2 = quests['quest2'];
-      if (activeQuestId === 'quest2' && quest2) {
-           if (quest2.currentObjectiveIndex === 2) {
-                setDialog('Crab Village', '(The crabs scuttle defensively, holding up a shiny brass tag engraved with the name "Milo"!)', () => {
-                     advanceQuestObjective('quest2');
-                     setDialog('Yoshi', '(You gently trade them a smooth pebble for the tag.)');
-                });
-           } else if (quest2.currentObjectiveIndex === 1) {
-                setDialog('Crab Village', '(The crabs are clicking their claws rhythmically in a circle.)');
-           } else {
-                setDialog('Crab Village', '(Busy crabs holding various shiny objects.)');
-           }
-      } else {
-           setDialog('Crab Village', '(A bustling tiny city constructed entirely out of stacked sea shells and stolen buttons.)');
-      }
+  const lightLantern = (index: number, flag: string, place: string) => {
+    if (activeQuestId !== 'lanterns' || lanterns?.currentObjectiveIndex !== index) {
+      setDialog('Lantern', worldFlags[flag] ? `(The ${place} lantern glows warmly.)` : `(This lantern is waiting for the evening walk.)`);
+      return;
+    }
+    setWorldFlag(flag, true);
+    setDialog('Lantern', `(The ${place} lantern flickers on, painting a little pool of gold across the path.)`, () => advanceQuestObjective('lanterns'));
   };
 
-  const handleMimiInteract = () => {
-       const quest3 = quests['quest3'];
-       if (quest3 && quest3.status === 'available' && !activeQuestId) {
-            setDialog('Mimi', 'Oh my squeak! A wind gust blew right through my kiosk and scattered three historical letters down on Seaglass beach!', () => {
-                 setActiveQuest('quest3');
-                 advanceQuestObjective('quest3');
-            });
-       } else if (activeQuestId === 'quest3') {
-            if (quest3.currentObjectiveIndex === 4) {
-                 setDialog('Mimi', 'You found them! All three letters! The archive is safe. Thank you, Courier Yoshi... and Assistant Milo.', () => {
-                      advanceQuestObjective('quest3');
-                      useGameStore.getState().setQuestStatus('quest4', 'available');
-                      useGameStore.getState().addStamp('Seaglass Stamp');
-                      setDialog('System', 'You completed "Letters in the Tidepools"! Rewards: Seaglass Stamp & Beach Bandana');
-                 });
-            } else {
-                 setDialog('Mimi', 'Please hurry, before the tide washes the ink away!');
-            }
-       } else {
-            setDialog('Mimi', 'Welcome to the archive kiosk! I keep track of letters, stamps, and history.');
-       }
-  };
-
-  const handleMossInteract = () => {
-       const quest4 = quests['quest4'];
-       if (quest4 && quest4.status === 'available' && !activeQuestId) {
-            setDialog('Moss', 'The wind chimes haven\'t been sounding right. I think the storm disrupted the petals. Milo used to walk this route...', () => {
-                 setActiveQuest('quest4');
-                 advanceQuestObjective('quest4');
-            });
-       } else if (activeQuestId === 'quest4') {
-            if (quest4.currentObjectiveIndex === 3) {
-                 setDialog('Moss', 'Ah, the storm petals. Thank you. Now the chimes will remember the way.', () => {
-                      advanceQuestObjective('quest4');
-                      useGameStore.getState().setQuestStatus('quest5', 'available');
-                      useGameStore.getState().addStamp('Garden Stamp');
-                      setDialog('System', 'You completed "Wind Chimes Remember"!');
-                 });
-            } else {
-                 setDialog('Moss', 'Listen closely to the wind... it hides memories in plain sight.');
-            }
-       } else {
-            setDialog('Moss', 'Some paths grow back when someone walks them kindly.');
-       }
-  };
-
-  const handleCaptainBrineInteract = () => {
-       const quest5 = quests['quest5'];
-       if (activeQuestId === 'quest5' && quest5?.currentObjectiveIndex === 3) {
-            setDialog('Captain Brine', 'An old route marker? Aye, I\'ve kept this one from before the storm. Take it, pup.', () => {
-                 advanceQuestObjective('quest5');
-            });
-       } else {
-            setDialog('Captain Brine', 'Ho there! I know the old routes, but my map is torn to pieces.');
-       }
-  };
+  const paulaMarker = homecoming?.status === 'available' ||
+    (activeQuestId === 'picnic' && picnic?.currentObjectiveIndex === 4) ||
+    garden?.status === 'available' || lanterns?.status === 'available' ||
+    (activeQuestId === 'lanterns' && lanterns?.currentObjectiveIndex === 4);
+  const jamMarker = (activeQuestId === 'homecoming' && homecoming?.currentObjectiveIndex === 2) ||
+    picnic?.status === 'available' ||
+    (activeQuestId === 'garden' && garden?.currentObjectiveIndex === 3) ||
+    memories?.status === 'available' ||
+    (activeQuestId === 'memories' && memories?.currentObjectiveIndex === 4);
 
   return (
     <group>
-      {/* ── OCEAN & EFFECTS ── */}
       <Water />
-      <Fish position={[-15, 0, 45]} />
-      <Fish position={[15, 0, 50]} color="#D96C5B" />
-      <Fish position={[40, 0, -40]} />
+      <Atmosphere />
 
-      {/* ── TERRAIN PLATFORMS (VARIED HEIGHTS) ── */}
+      {/* An asymmetric island with coves, headlands, and a winding village walk. */}
       <RigidBody type="fixed" colliders={false} friction={1}>
-        {/* Main Town Level (y=0) */}
-        <CylinderCollider args={[0.5, 55]} position={[0, -0.5, 0]} />
-        <mesh position={[0, -0.5, 0]} receiveShadow>
-          <cylinderGeometry args={[55, 60, 1, 64]} />
-          <meshStandardMaterial color="#88A07A" />
-        </mesh>
-        
-        {/* Farm / Eastern Hill (y=0.5) */}
-        <CylinderCollider args={[0.5, 25]} position={[25, 0, -25]} />
-        <mesh position={[25, 0, -25]} receiveShadow>
-          <cylinderGeometry args={[25, 30, 1, 32]} />
-          <meshStandardMaterial color="#7C9982" />
-        </mesh>
-        <mesh position={[10, -0.05, -10]} rotation={[-Math.PI / 2, 0, -Math.PI / 4]} receiveShadow>
-            <planeGeometry args={[15, 10]} />
-            <meshStandardMaterial color="#88A07A" />
-        </mesh> {/* Ramp blending area */}
+        <CylinderCollider args={[0.5, 40.5]} position={[0, -0.5, 0]} />
+        <SculptedIsland
+          position={[0, -0.5, 0]}
+          radiusTop={46}
+          radiusBottom={50}
+          height={1}
+          seed={13}
+          irregularity={0.12}
+          scaleX={1.06}
+          scaleZ={0.96}
+        />
+        <Shoreline
+          innerRadius={40.5}
+          outerRadius={46.5}
+          seed={13}
+          irregularity={0.12}
+          scaleX={1.06}
+          scaleZ={0.96}
+        />
 
-        {/* Courier Hut Hill (NW) (y=1.5) */}
-        <CylinderCollider args={[1.0, 20]} position={[-25, 0.5, -25]} />
-        <mesh position={[-25, 0.5, -25]} receiveShadow>
-          <cylinderGeometry args={[20, 25, 2, 32]} />
-          <meshStandardMaterial color="#88A07A" />
-        </mesh>
-        {/* Ramp to Courier Hill */}
-        <mesh position={[-12, 0.5, -12]} rotation={[-0.2, -Math.PI / 4, 0]} receiveShadow>
-            <boxGeometry args={[10, 0.2, 12]} />
-            <meshStandardMaterial color="#D9C7B0" />
-        </mesh>
-        <CylinderCollider args={[0.1, 5]} position={[-12, 0.5, -12]} rotation={[-0.2, -Math.PI / 4, 0]} />
+        <CurvedPath points={[[0, 0, -17], [0.5, 0, -10], [-1.5, 0, -4], [-1, 0, 1]]} width={4.2} />
+        <CurvedPath points={[[-1, 0, 1], [5, 0, -1], [10, 0, -5], [16, 0, -8], [22, 0, -8]]} width={3.8} />
+        <CurvedPath points={[[3, 0, 3], [8, 0, 7], [13, 0, 12], [18, 0, 18]]} width={3.7} />
+        <CurvedPath points={[[-2, 0, 2], [-6, 0, 6], [-10, 0, 12], [-11, 0, 18]]} width={3.7} />
+        <CurvedPath points={[[-11, 0, 13], [-15, 0, 8], [-17, 0, 2], [-18, 0, -5]]} width={3.5} />
+        <CurvedPath points={[[-18, 0, -5], [-12, 0, -6], [-7, 0, -5], [-1.5, 0, -4]]} width={3.5} />
+        <CurvedPath points={[[-17, 0, 2], [-22, 0, 3], [-27, 0, 5], [-31, 0, 6]]} width={3.2} />
+        <CurvedPath points={[[2, 0, 3], [4, 0, 9], [2, 0.04, 16], [0.5, 0.3, 22], [0, 1.2, 25], [0, 1.72, 29]]} width={3.4} />
 
-        {/* Lighthouse Hill (West) (y=3.0) */}
-        <CylinderCollider args={[2.0, 15]} position={[-55, 1.0, 0]} />
-        <mesh position={[-55, 1.0, 0]} receiveShadow>
-          <cylinderGeometry args={[15, 20, 4, 32]} />
-          <meshStandardMaterial color="#7C9982" />
-        </mesh>
-        {/* Ramp to Lighthouse */}
-        <mesh position={[-38, 1.5, 0]} rotation={[0, 0, 0.2]} receiveShadow>
-            <boxGeometry args={[15, 0.2, 8]} />
-            <meshStandardMaterial color="#D9C7B0" />
-        </mesh>
-        <CylinderCollider args={[0.1, 7.5]} position={[-38, 1.5, 0]} rotation={[0, 0, 0.2]} />
-
-        {/* Old Dock Landing (East) (y=-0.4) */}
-        <CylinderCollider args={[0.2, 12]} position={[50, -0.7, 0]} />
-        <mesh position={[50, -0.7, 0]} receiveShadow>
-          <cylinderGeometry args={[12, 15, 0.4, 16]} />
-          <meshStandardMaterial color="#E8DCC4" />
-        </mesh>
-
-        {/* Paths (Cross shape & diagonals mapped to terrain) */}
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[70, 10]} />
-          <meshStandardMaterial color="#E8DCC4" />
-        </mesh>
-        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 2]} receiveShadow>
-          <planeGeometry args={[70, 10]} />
-          <meshStandardMaterial color="#E8DCC4" />
-        </mesh>
-        <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 4]} receiveShadow>
-          <ringGeometry args={[20, 26, 4]} />
-          <meshStandardMaterial color="#E8DCC4" />
-        </mesh>
-        {/* Central Plaza */}
-        <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, Math.PI / 4]} receiveShadow>
-          <planeGeometry args={[15, 15]} />
-          <meshStandardMaterial color="#D9C7B0" />
-        </mesh>
+        <TerrainMound
+          position={[-1, 0.018, 1]}
+          radiusX={6.2}
+          radiusZ={4.8}
+          height={0}
+          seed={28}
+          material={plazaMaterial}
+        />
       </RigidBody>
 
+      {/* Collision-backed elevation makes the hill walk and the wooded ridges feel grounded. */}
+      <RigidBody type="fixed" colliders={false} friction={1}>
+        <MeshCollider type="trimesh">
+          <TerrainMound position={[0, 0, 30]} radiusX={10.5} radiusZ={11.5} height={1.72} seed={7} material={hillGrassMaterial} />
+        </MeshCollider>
+      </RigidBody>
+      <RigidBody type="fixed" colliders={false} friction={1}>
+        <MeshCollider type="trimesh">
+          <TerrainMound position={[-35, 0, -27]} radiusX={9.5} radiusZ={7} height={0.78} seed={18} material={hillGrassMaterial} />
+        </MeshCollider>
+      </RigidBody>
+      <RigidBody type="fixed" colliders={false} friction={1}>
+        <MeshCollider type="trimesh">
+          <TerrainMound position={[36, 0, 18]} radiusX={9} radiusZ={10} height={0.98} seed={25} material={hillGrassMaterial} />
+        </MeshCollider>
+      </RigidBody>
 
-      {/* ── INTENTIONAL AAA NATURE & PROP PLACEMENT ── */}
-      {/* We remove all random scatters and instead craft beautiful, intentional clusters. */}
-      
-      {/* Central Plaza Clusters */}
-      <group position={[0, 0, 0]}>
-         <RigidBody type="fixed" colliders="hull">
-            <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-               <cylinderGeometry args={[2.5, 2.5, 0.8, 16]} />
-               <meshStandardMaterial color="#A68A72" />
-            </mesh>
-            <mesh position={[0, 1.0, 0]} castShadow>
-               <cylinderGeometry args={[0.8, 0.8, 1.5, 16]} />
-               <meshStandardMaterial color="#8C6B52" />
-            </mesh>
-            <mesh position={[0, 1.8, 0]} castShadow>
-               <sphereGeometry args={[0.6, 16, 16]} />
-               <meshStandardMaterial color="#A8C8D9" />
-            </mesh>
-            {/* Water */}
-            <mesh position={[0, 0.7, 0]} receiveShadow>
-               <cylinderGeometry args={[2.2, 2.2, 0.1, 16]} />
-               <meshStandardMaterial color="#A8C8D9" transparent opacity={0.8} />
-            </mesh>
-         </RigidBody>
-         
-         {/* Seating under cherry blossoms */}
-         <group position={[6, 0, 6]}>
-            <Tree position={[0, 0, 0]} scale={1.2} blossom={true} />
-            <Bench position={[-2, 0, -2]} rotation={[0, -Math.PI/4, 0]} />
-            <Lantern position={[-3, 0, -1]} />
-         </group>
-         <group position={[-6, 0, -6]}>
-            <Tree position={[0, 0, 0]} scale={1.1} blossom={true} />
-            <Bench position={[2, 0, 2]} rotation={[0, Math.PI*0.75, 0]} />
-            <Bush position={[2, 0, 0]} scale={1.3} />
-         </group>
-         
-         <Streetlamp position={[6, 0, 0]} />
-         <Streetlamp position={[-6, 0, 0]} />
-         <Streetlamp position={[0, 0, 6]} />
-         <Streetlamp position={[0, 0, -6]} />
-         
-         <Seagull position={[0, 4, 0]} pathRadius={5} speed={0.8} />
-      </group>
+      <LandscapeDetail />
 
-
-      {/* ── NORTHWEST: COURIER HILL ── */}
-      <group position={[-25, 1.5, -25]}>
+      {/* Maple House — Paula, Jam, Yoshi, and Milo's home base. */}
+      <group position={[0, 0, -19]}>
         <RigidBody type="fixed" colliders="cuboid">
-            <CourierHut position={[0, 0, 0]} rotation={[0, Math.PI/4, 0]} />
-            <mesh position={[2, 0.8, -1]} rotation={[0, Math.PI/4, 0]} castShadow>
-               <boxGeometry args={[1.2, 1.6, 0.6]} />
-               <meshStandardMaterial color="#3A1D13" />
-            </mesh>
-            <NPC id="wardrobe" name="Wardrobe" position={[2, 1, -1]} color="#D93D4A" type="secret" onInteract={() => {
-                useGameStore.getState().setDialog('System', 'You put on the red courier neckerchief! Looking sharp!', () => {
-                   if (useGameStore.getState().activeQuestId === 'prologue' && useGameStore.getState().quests['prologue'].currentObjectiveIndex === 1) {
-                       useGameStore.getState().advanceQuestObjective('prologue');
-                   }
-                });
-            }} showQuestMarker={useGameStore.getState().activeQuestId === 'prologue' && useGameStore.getState().quests['prologue'].currentObjectiveIndex === 1} />
-        </RigidBody>
-        <RigidBody type="fixed" colliders="hull">
-            <Mailbox position={[2, 0, 2]} rotation={[0, Math.PI/4, 0]} />
-            <Campfire position={[-3, 0, 2]} />
-            <Bench position={[-3, 0, 4]} rotation={[0, 0, 0]} />
-            <Clothesline position={[-4, 0, -2]} rotation={[0, Math.PI/2, 0]} />
-        </RigidBody>
-        
-        {/* Curated Pine Cluster */}
-        <PineTree position={[-6, 0, -5]} scale={1.2} />
-        <PineTree position={[-3, 0, -8]} scale={1.4} />
-        <PineTree position={[2, 0, -6]} scale={1.1} />
-        <Rock position={[-5, 0, -7]} scale={1.3} />
-        <Bush position={[-2, 0, -5]} scale={1.5} />
-      </group>
-      <NPC id="taro" name="Taro" position={[-22, 1.5, -22]} color="#5A7D59" type="tortoise" onInteract={handleTaroInteract} showQuestMarker={quests['prologue']?.status === 'available' || (quests['quest1']?.status === 'available' && !activeQuestId) || (quests['quest6']?.status === 'available') || (activeQuestId === 'quest6' && quests['quest6']?.currentObjectiveIndex < 4)} />
-      <CozyInteractable id="mail-sorting" name="Mail Sorting Table" position={[-28, 1.5, -20]} text="Every envelope has a pawprint stamp and a route ribbon. Taro runs a tidy operation." />
-
-
-      {/* ── SOUTHWEST: BUNRISE BAKERY ── */}
-      <group position={[-20, 0, 20]}>
-        <RigidBody type="fixed" colliders="cuboid">
-            <Bakery position={[0, 0, 0]} rotation={[0, -Math.PI/4, 0]} />
-        </RigidBody>
-        
-        {/* Organized Bakery Seating and Delivery Cart */}
-        <RigidBody type="fixed" colliders="hull">
-           <Cart position={[-4, 0, 3]} rotation={[0, -Math.PI/6, 0]} />
-           <Barrel position={[2, 0, -3]} />
-           <Barrel position={[2.8, 0, -3.5]} color="#6B5440" />
-           <Crate position={[-3, 0.4, 4]} rotation={[0, 0.2, 0]} />
-        </RigidBody>
-        <Bunting position={[2, 2.5, 2]} />
-        <Bunting position={[-2, 2.5, 2]} />
-        
-        <Tree position={[-5, 0, -5]} scale={1.1} blossom />
-        <Tree position={[2, 0, 6]} scale={1.0} blossom />
-        <Bench position={[4, 0, 1]} rotation={[0, Math.PI/4, 0]} />
-        <FlowerBed position={[4, 0, 4]} rotation={[0, Math.PI/4, 0]} />
-      </group>
-      <NPC id="sora" name="Sora" position={[-18, 0, 18]} color="#E8A95B" type="cat" onInteract={handleSoraInteract} showQuestMarker={activeQuestId === 'quest1' && quests['quest1'].currentObjectiveIndex <= 1} />
-      <CozyInteractable id="tea-garden-west" name="Tea Garden" position={[-24, 0, 25]} text="Someone left sea-mint tea cooling beside a plate of tiny butter cookies." />
-
-
-      {/* ── NORTHEAST: FARMING DISTRICT & ARCHIVE ── */}
-      <group position={[25, 0.5, -25]}>
-         {/* Archive Stall */}
-         <RigidBody type="fixed" colliders="hull">
-            <WoodenArch position={[-5, 0, 5]} rotation={[0, -Math.PI/4, 0]} />
-            <MarketStall position={[-5, 0, 5]} rotation={[0, -Math.PI/4, 0]} color="#D96C5B" />
-         </RigidBody>
-         <NPC id="mimi" name="Mimi" position={[-3, 0.2, 3]} color="#D9553F" type="mouse" onInteract={handleMimiInteract} showQuestMarker={quests['quest3']?.status === 'available' || activeQuestId === 'quest3'} />
-
-         {/* Curated Crop Rows */}
-         {[0, 1, 2, 3].map((row) => (
-            <group key={`crop-${row}`} position={[2 + row * 2, 0, -2]}>
-               <mesh position={[0, -0.05, 0]} receiveShadow>
-                   <boxGeometry args={[1.2, 0.1, 10]} />
-                   <meshStandardMaterial color="#5C4D3C" />
-               </mesh>
-               <TallGrass position={[0, 0.1, -4]} />
-               <TallGrass position={[0, 0.1, -2]} />
-               <TallGrass position={[0, 0.1, 0]} />
-               <TallGrass position={[0, 0.1, 2]} />
-               <TallGrass position={[0, 0.1, 4]} />
-            </group>
-         ))}
-         
-         <WellPump position={[0, 0, -8]} scale={0.8} />
-         <Cart position={[-3, 0, -5]} rotation={[0, Math.PI/6, 0]} />
-         
-         {/* Beautiful Orchard Edge */}
-         <Tree position={[12, 0, 4]} scale={1.2} />
-         <Tree position={[14, 0, 0]} scale={1.1} blossom />
-         <Bush position={[10, 0, 6]} scale={1.4} />
-         <Bush position={[13, 0, -2]} scale={1.2} />
-         
-         <Butterfly position={[2, 1, -2]} pathRadius={4} />
-         <Dragonfly position={[4, 1.5, 0]} pathRadius={5} />
-      </group>
-      <CozyInteractable id="garden-journal" name="Garden Journal" position={[20, 0.5, -20]} text="The page lists windbell blooms, carrot sprouts, and a doodle of Milo chasing petals." />
-
-
-      {/* ── SOUTHEAST: WINDBELL GARDENS ── */}
-      <group position={[20, 0, 20]}>
-         {/* Wind chimes structure */}
-         <group position={[0, 1.5, 0]} rotation={[0, Math.PI/4, 0]}>
-             <mesh castShadow>
-                 <cylinderGeometry args={[0.05, 0.05, 3]} />
-                 <meshStandardMaterial color="#5C4D3C" />
-             </mesh>
-             <mesh position={[0, 1.5, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-                 <cylinderGeometry args={[0.05, 0.05, 2]} />
-                 <meshStandardMaterial color="#5C4D3C" />
-             </mesh>
-             <mesh position={[-0.5, 1, 0]} castShadow>
-                 <cylinderGeometry args={[0.02, 0.02, 0.8]} />
-                 <meshStandardMaterial color="#A68A72" />
-             </mesh>
-             <mesh position={[0.5, 0.7, 0]} castShadow>
-                 <cylinderGeometry args={[0.02, 0.02, 1.2]} />
-                 <meshStandardMaterial color="#A68A72" />
-             </mesh>
-             {activeQuestId === 'quest6' && (quests['quest6']?.currentObjectiveIndex === 2 || quests['quest6']?.currentObjectiveIndex === 3) && (
-                 <NPC id="wind-chimes" name="Wind Chimes" position={[0, 0.5, 0]} color="#FDFBF7" type="secret" showQuestMarker onInteract={() => {
-                     const q = useGameStore.getState().quests['quest6'];
-                     if (q.currentObjectiveIndex === 2) {
-                         useGameStore.getState().advanceQuestObjective('quest6');
-                         useGameStore.getState().setDialog('Yoshi', '(The wind chimes wait for your bark...)');
-                     } else if (q.currentObjectiveIndex === 3) {
-                         useGameStore.getState().advanceQuestObjective('quest6');
-                         useGameStore.getState().setDialog('Yoshi', '(You let out a loud BARK! The chimes sing brightly, and the path ahead seems clear!)');
-                     }
-                 }} />
-             )}
-         </group>
-         
-         {/* Neat Flower Layout */}
-         <FlowerBed position={[4, 0, 4]} />
-         <FlowerBed position={[-4, 0, -4]} />
-         <FlowerBed position={[4, 0, -4]} rotation={[0, Math.PI/2, 0]} />
-         <FlowerBed position={[-4, 0, 4]} rotation={[0, Math.PI/2, 0]} />
-         
-         <Bench position={[5, 0, 0]} rotation={[0, -Math.PI/2, 0]} />
-         <Streetlamp position={[6, 0, 6]} />
-         
-         <Butterfly position={[0, 1.5, 0]} pathRadius={3} color="#FDFBF7" />
-
-         {[
-            [-2.5, 0.2, 2], [-1.5, 0.2, 3], [3.5, 0.2, 2]
-         ].map((pos, i) => (
-             <group key={`flower-${i}`} position={pos as [number, number, number]}>
-                 <mesh>
-                     <sphereGeometry args={[0.3]} />
-                     <meshStandardMaterial color={['#D93D4A', '#E8A95B', '#FDFBF7'][i % 3]} />
-                 </mesh>
-                 {activeQuestId === 'quest4' && quests['quest4']?.currentObjectiveIndex >= 1 && quests['quest4']?.currentObjectiveIndex < 3 && i < 2 && (
-                     <NPC id={`petal-${i}`} name="Storm Petal" position={[0, 0, 0]} color="#D93D4A" type="secret" showQuestMarker onInteract={() => {
-                          useGameStore.getState().advanceQuestObjective('quest4');
-                          useGameStore.getState().setDialog('Yoshi', '(You sniffed out a fallen windbell blossom!)');
-                     }} />
-                 )}
-             </group>
-         ))}
-      </group>
-      <NPC id="moss" name="Moss" position={[22, 0, 20]} color="#8C6B52" type="capybara" onInteract={handleMossInteract} showQuestMarker={activeQuestId === 'quest4'} />
-
-
-      {/* ── WEST: LIGHTHOUSE HILL ── */}
-      <group position={[-55, 3.0, 0]}>
-        <RigidBody type="fixed" colliders="cuboid">
-          <mesh position={[0, 4, 0]} castShadow receiveShadow>
-            <cylinderGeometry args={[1.5, 2.5, 8, 12]} />
-            <meshStandardMaterial color="#FDFBF7" />
-          </mesh>
-          <mesh position={[0, 8.5, 0]} castShadow receiveShadow>
-            <cylinderGeometry args={[1, 1.5, 1, 8]} />
-            <meshStandardMaterial color="#3A1D13" />
-          </mesh>
-          <mesh position={[0, 9.5, 0]} castShadow receiveShadow>
-            <coneGeometry args={[1.2, 1, 8]} />
-            <meshStandardMaterial color="#D93D4A" />
-          </mesh>
-        </RigidBody>
-        <Signpost position={[3, 0, -3]} rotation={[0, Math.PI/4, 0]} />
-        <Seagull position={[0, 12, 0]} pathRadius={8} speed={0.5} />
-        <Seagull position={[0, 10, 0]} pathRadius={6} speed={0.7} />
-        
-        {/* Curated cliff foliage */}
-        <PineTree position={[-4, 0, -3]} scale={1.2} />
-        <PineTree position={[-2, 0, 4]} scale={1.3} />
-        <Bush position={[-5, 0, 1]} scale={1.5} />
-      </group>
-      <NPC id="aoi" name="Aoi" position={[-52, 3.0, 2]} color="#FDFBF7" type="crane" onInteract={handleAoiInteract} showQuestMarker={(activeQuestId === 'quest1' && quests['quest1'].currentObjectiveIndex === 1) || (activeQuestId === 'quest6' && quests['quest6'].currentObjectiveIndex === 4)} />
-      <CozyInteractable id="lighthouse-lookout" name="Lookout Telescope" position={[-50, 3.0, -4]} text="Through the little telescope, Pawprint Bay looks like a quilt of gardens and warm windows." />
-
-
-      {/* ── EAST: OLD DOCK & CRAB VILLAGE ── */}
-      <group position={[50, -0.4, 0]}>
-          <RigidBody type="fixed" colliders="cuboid">
-            <mesh position={[10, 0, 0]} castShadow receiveShadow>
-              <boxGeometry args={[12, 0.4, 8]} />
-              <meshStandardMaterial color="#5C4D3C" />
-            </mesh>
-            
-            {/* Organized Dock Cargo */}
-            <group position={[12, 0.4, -2]}>
-               <Crate position={[0, 0, 0]} />
-               <Crate position={[0, 0.8, 0]} rotation={[0, 0.1, 0]} />
-               <Barrel position={[-1, 0, 0.5]} />
-               <Barrel position={[-1.2, 0, -0.5]} color="#6B5440" />
-            </group>
-            
-            <RopeCoil position={[14, 0.2, 2]} />
-            <RopeCoil position={[7, 0.2, 3]} />
-            <Lantern position={[10, 0.2, -3]} />
-            <Boat position={[10, -0.4, 5]} rotation={[0, Math.PI/4, 0]} color="#D93D4A" />
-            
-            {activeQuestId === 'quest5' && quests['quest5']?.currentObjectiveIndex === 2 && (
-               <NPC id="rope" name="Sturdy Rope" position={[8, 0.4, -2]} color="#E8DCC4" type="secret" showQuestMarker onInteract={() => {
-                   useGameStore.getState().advanceQuestObjective('quest5');
-                   useGameStore.getState().setDialog('Yoshi', '(You grabbed some thick dock rope!)');
-               }} />
-            )}
-          </RigidBody>
-          <Seagull position={[10, 4, 0]} pathRadius={4} speed={1.2} />
-          <group position={[10, -0.6, 2]}>
-             <Crab position={[-0.5, 0, 0]} color="#D93D4A" scale={0.8} />
-             <Crab position={[0.5, 0, 0.2]} color="#E8A95B" scale={0.7} />
-             <NPC id="crab" name="Secret Crab Village" position={[0, 0.2, 0]} color="#D93D4A" type="secret" onInteract={handleCrabInteract} showQuestMarker={activeQuestId === 'quest2' && quests['quest2']?.currentObjectiveIndex === 2} />
+          <group scale={1.7}>
+            <House color="#F6E8CD" roofColor="#C95B50" hasChimney />
           </group>
+        </RigidBody>
+        <Mailbox position={[-3.2, 0, 3]} rotation={[0, 0.2, 0]} />
+        <Clothesline position={[5.5, 0, -1.5]} rotation={[0, Math.PI / 2, 0]} />
+        <FlowerBed position={[-4.3, 0, 1.2]} rotation={[0, 0.2, 0]} />
+        <FlowerBed position={[4.2, 0, 1.2]} rotation={[0, -0.2, 0]} />
+        <Bench position={[-5.3, 0, 4]} rotation={[0, 0.55, 0]} />
+        <Bunting position={[0, 3.8, 2.6]} scale={1.2} />
       </group>
-      <NPC id="nori" name="Nori" position={[55, -0.4, 0]} color="#A68A72" type="capybara" onInteract={handleNoriInteract} showQuestMarker={quests['quest2']?.status === 'available' || (activeQuestId === 'quest2' && quests['quest2']?.currentObjectiveIndex === 0) || activeQuestId === 'quest5'} />
-      <NPC id="captain-brine" name="Captain Brine" position={[60, -0.4, -2]} color="#FDFBF7" type="dog" onInteract={handleCaptainBrineInteract} showQuestMarker={activeQuestId === 'quest5' && quests['quest5']?.currentObjectiveIndex === 3} />
-      {!useGameStore.getState().hasMilo && (
-         <NPC id="milo-hiding" name="Hiding Dachshund" position={[60, -0.5, 2]} color="#A94F2B" type="dog" onInteract={handleMiloInteract} showQuestMarker={activeQuestId === 'quest2' && (quests['quest2'].currentObjectiveIndex === 1 || quests['quest2'].currentObjectiveIndex === 3)} />
-      )}
-      <CozyInteractable id="fishing-spot" name="Fishing Spot" position={[58, -0.4, -4]} text="The bobber drifts lazily. Something silver flickers under the dock." />
-
-
-      {/* ── SOUTH: SEAGLASS BEACH ── */}
-      <group position={[0, -0.6, 50]}>
-         <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-             <planeGeometry args={[30, 20]} />
-             <meshStandardMaterial color="#E8DCC4" />
-         </mesh>
-         {/* Tidepools */}
-         <mesh position={[5, 0.05, 3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-             <planeGeometry args={[6, 6]} />
-             <meshStandardMaterial color="#A8C8D9" transparent opacity={0.8} />
-         </mesh>
-         <mesh position={[-4, 0.05, -2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-             <planeGeometry args={[4, 5]} />
-             <meshStandardMaterial color="#A8C8D9" transparent opacity={0.8} />
-         </mesh>
-
-         {/* Handplaced Palms and Beach details */}
-         <PalmTree position={[-12, 0, -6]} scale={1.2} />
-         <PalmTree position={[-8, 0, -8]} scale={1.1} />
-         <PalmTree position={[14, 0, -2]} scale={1.4} />
-         
-         <Rock position={[-5, 0.2, 5]} scale={1.5} />
-         <Rock position={[6, 0.2, -5]} scale={0.8} />
-
-         <Crab position={[-8, 0, 2]} color="#E8A95B" />
-         <Crab position={[8, 0, 4]} color="#D93D4A" />
-
-         {activeQuestId === 'quest5' && quests['quest5']?.currentObjectiveIndex === 1 && (
-             <NPC id="driftwood" name="Sturdy Driftwood" position={[-4, 0.2, 0]} color="#A68A72" type="secret" showQuestMarker onInteract={() => {
-                 useGameStore.getState().advanceQuestObjective('quest5');
-                 useGameStore.getState().setDialog('Yoshi', '(You found a strong piece of driftwood for the bridge!)');
-             }} />
-         )}
-
-         {/* Letters */}
-         {[
-            [-1, 0.1, 1], [3, 0.1, -1], [1, 0.1, 3], [-3, 0.1, -2]
-          ].map((pos, i) => (
-             <group key={`glass-${i}`} position={pos as [number, number, number]}>
-                 <mesh rotation={[Math.random(), Math.random(), 0]}>
-                    <icosahedronGeometry args={[0.2, 0]} />
-                    <meshStandardMaterial color={['#A8C8D9', '#7C9982', '#FDFBF7'][i % 3]} transparent opacity={0.8} />
-                 </mesh>
-                 {activeQuestId === 'quest3' && quests['quest3']?.currentObjectiveIndex >= 1 && quests['quest3']?.currentObjectiveIndex < 4 && i < 3 && (
-                     <NPC id={`letter-${i}`} name="Wet Letter" position={[0, 0, 0]} color="#FDFBF7" type="secret" showQuestMarker={useGameStore.getState().hasMilo} onInteract={() => {
-                         useGameStore.getState().advanceQuestObjective('quest3');
-                         useGameStore.getState().setDialog('Yoshi', '(You carefully pick up the soggy letter!)');
-                     }} />
-                 )}
-             </group>
-          ))}
-          
-          <CozyInteractable id="beach-lounge-west" name="Beach Lounge" position={[-10, 0, 5]} text="A towel, a shade umbrella, and a half-built sandcastle wait for a lazy afternoon." />
+      <FenceRun position={[-6.4, 0, -13.2]} length={8.2} />
+      <FenceRun position={[6.4, 0, -13.2]} length={8.2} />
+      <group position={[0, 0, -13.15]} scale={0.82}>
+        <WoodenArch />
       </group>
 
+      <HumanNPC id="paula" name="Paula" position={[-3.2, 0, -11.5]} variant="paula" onInteract={handlePaulaInteract} showQuestMarker={paulaMarker} />
+      <HumanNPC id="jam" name="Jam" position={[3.2, 0, -8.5]} variant="jam" onInteract={handleJamInteract} showQuestMarker={jamMarker} />
 
-      {/* ── NORTH: MOAT & BRIDGE ── */}
-      <group position={[0, 0, -50]}>
-        <mesh position={[0, -0.4, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[40, 15]} />
-          <meshStandardMaterial color="#A8C8D9" transparent opacity={0.8} />
+      <WelcomeBasket opened={Boolean(worldFlags.welcome_basket)} />
+      <InteractionAnchor
+        id="welcome-basket"
+        label="Sniff welcome basket"
+        position={[-1.7, 0.4, -14.2]}
+        showQuestMarker={activeQuestId === 'homecoming' && homecoming?.currentObjectiveIndex === 1}
+        onInteract={() => {
+          if (activeQuestId === 'homecoming' && homecoming?.currentObjectiveIndex === 1) {
+            setWorldFlag('welcome_basket', true);
+            setDialog('Yoshi', '(Fresh biscuits, two soft bandanas, and a note: “For our very good boys.”)', () => advanceQuestObjective('homecoming'));
+          } else {
+            setDialog('Yoshi', '(The basket smells like home, biscuits, and a little bit of Milo.)');
+          }
+        }}
+      />
+
+      {/* Village green and picnic lawn. */}
+      <PicnicBlanket />
+      <Tree position={[-5.5, 0, 4]} scale={1.45} blossom />
+      <Tree position={[10.5, 0, 4.5]} scale={1.3} />
+      <Bench position={[-6, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
+      <Streetlamp position={[-4.5, 0, -5]} />
+      <Streetlamp position={[4.5, 0, -5]} />
+      <Campfire position={[11, 0, 9.5]} scale={0.85} />
+      <Crate position={[9.8, 0, 10.2]} scale={0.65} />
+      <Barrel position={[11.8, 0, 11]} scale={0.65} />
+      <Lantern position={[4.4, 0, 5]} />
+
+      {/* Market lane and garden neighborhood. */}
+      <group position={[21, 0, -8]}>
+        <TerrainMound
+          position={[0, 0.018, 0]}
+          radiusX={7}
+          radiusZ={4.2}
+          height={0}
+          seed={41}
+          material={plazaMaterial}
+        />
+        <RigidBody type="fixed" colliders="cuboid">
+          <MarketStall color="#D67B5B" />
+        </RigidBody>
+        <WoodenArch position={[-3.8, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
+        <Cart position={[3.2, 0, 1.2]} rotation={[0, -0.25, 0]} scale={0.8} />
+        <Crate position={[2.5, 0, -1.45]} scale={0.75} />
+        <Crate position={[3.25, 0, -1.25]} scale={0.55} />
+        <Barrel position={[4.2, 0, -0.9]} scale={0.62} />
+        <Bunting position={[0, 2.6, 1]} />
+        <FlowerBed position={[-1.8, 0, 2]} />
+        <Streetlamp position={[-5.3, 0, -2]} />
+      </group>
+      <NPC id="sora" name="Sora" position={[19, 0, -5]} color="#E8A95B" type="cat" onInteract={() => setDialog('Sora', 'Paula chose carrot seeds, Jam chose sunflowers, and Milo tried to choose the whole basket.')} />
+      <GardenPatch watered={Boolean(worldFlags.garden_watered)} />
+      <FenceRun position={[9, 0, -20.2]} length={9} />
+      <FenceRun position={[14.4, 0, -17.2]} length={6.2} rotation={Math.PI / 2} />
+      <InteractionAnchor
+        id="seed-packet"
+        label="Pick up seed packet"
+        position={[23.4, 0.8, -9.5]}
+        showQuestMarker={activeQuestId === 'garden' && garden?.currentObjectiveIndex === 1}
+        onInteract={() => {
+          if (activeQuestId === 'garden' && garden?.currentObjectiveIndex === 1) {
+            setWorldFlag('seed_packet', true);
+            useGameStore.getState().addItem('seed-packet', 1);
+            setDialog('Sora', 'One packet of dog-safe meadow flowers, tied with Paula’s blue ribbon.', () => advanceQuestObjective('garden'));
+          } else setDialog('Sora', 'These seeds are waiting for a sunny patch and a patient pup.');
+        }}
+      />
+      <InteractionAnchor
+        id="milo-garden"
+        label="Water Milo's garden"
+        position={[9, 0.5, -17]}
+        showQuestMarker={activeQuestId === 'garden' && garden?.currentObjectiveIndex === 2}
+        onInteract={() => {
+          if (activeQuestId === 'garden' && garden?.currentObjectiveIndex === 2) {
+            setWorldFlag('garden_watered', true);
+            setDialog('Milo', '(Milo supervises each drop. Tiny green shoots uncurl from the warm soil.)', () => advanceQuestObjective('garden'));
+          } else setDialog('Yoshi', worldFlags.garden_watered ? '(Milo’s little garden is already growing.)' : '(The soil is soft and sunny—perfect for a small garden.)');
+        }}
+      />
+
+      {/* Clover Meadow — dense but readable gathering space. */}
+      <group position={[18, 0, 17]}>
+        {[[-6, -4], [-3, 2], [0, -2], [3, 3], [6, -1], [1, 6], [-5, 6]].map(([x, z], index) => (
+          <TallGrass key={`${x}-${z}`} position={[x, 0, z]} scale={0.8 + (index % 3) * 0.15} />
+        ))}
+        <FlowerBed position={[-4, 0, 0]} rotation={[0, 0.3, 0]} />
+        <FlowerBed position={[4, 0, 5]} rotation={[0, -0.4, 0]} />
+        <Bush position={[7, 0, 3]} scale={1.2} />
+        <Rock position={[-7, 0, 5]} scale={1.1} />
+        <Butterfly position={[0, 1.2, 0]} pathRadius={5} color="#F6D35E" />
+        <Butterfly position={[4, 1, 4]} pathRadius={3} color="#A7C7E7" />
+        <Dragonfly position={[-4, 1.4, 3]} pathRadius={4} />
+      </group>
+
+      {/* Willow Pond and footbridge. */}
+      <group position={[-18, 0, 18]}>
+        <SculptedIsland
+          position={[0, 0.045, 0]}
+          radiusTop={7.6}
+          radiusBottom={7.9}
+          height={0.14}
+          seed={53}
+          irregularity={0.1}
+          scaleX={1.08}
+          scaleZ={0.9}
+          topMaterial={sandMaterial}
+        />
+        <mesh position={[0, 0.125, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1.08, 0.9, 1]} receiveShadow>
+          <circleGeometry args={[6.5, 48]} />
+          <meshPhysicalMaterial color="#5FA8A4" transparent opacity={0.9} roughness={0.12} clearcoat={1} envMapIntensity={1.3} />
         </mesh>
-        <ArchBridge position={[0, -0.6, 0]} rotation={[0, 0, 0]} width={4} length={12} />
-        
-        <Frog position={[-10, -0.2, 0]} />
-        <Frog position={[8, -0.2, 3]} />
-        <Dragonfly position={[0, 1.5, -5]} />
+        <ArchBridge position={[0, 0.11, 0]} rotation={[0, Math.PI / 2, 0]} width={2.4} length={8} />
+        <Tree position={[-7, 0, -2]} scale={1.45} />
+        <Tree position={[7, 0, 3]} scale={1.3} blossom />
+        <Bench position={[-6, 0, 4]} rotation={[0, 2.2, 0]} />
+        <Rock position={[6, 0, -4]} scale={1.4} />
+        <Rock position={[-7, 0, 2]} scale={0.85} />
+        <TallGrass position={[-5.5, 0, -4.8]} scale={0.75} />
+        <TallGrass position={[-1.5, 0, 6]} scale={0.68} />
+        <TallGrass position={[4.8, 0, 4.6]} scale={0.8} />
+        <TallGrass position={[5.6, 0, -2]} scale={0.7} />
+        <Frog position={[-3, 0.15, 2]} />
+        <Frog position={[3, 0.15, -2]} />
+        <Dragonfly position={[0, 1.5, 0]} pathRadius={5} />
+        {[-5, -3, 4, 6].map((x, index) => <Mushroom key={x} position={[x, 0, index % 2 ? 6 : -6]} scale={0.7 + index * 0.08} color={index % 2 ? '#D96C5B' : '#E8A95B'} />)}
+      </group>
+      <NPC id="taro" name="Taro" position={[-12, 0, 18]} color="#5A7D59" type="tortoise" onInteract={() => setDialog('Taro', 'I have watched many families cross this bridge. The happiest ones always stop for the ducks.')} />
+
+      {/* Applebell Orchard and bakery cottage. */}
+      <group>
+        {ORCHARD_TREES.map((position, index) => <Tree key={`${position[0]}-${position[2]}`} position={position} scale={0.95 + (index % 3) * 0.12} blossom={index % 4 === 0} />)}
+        <FenceRun position={[-23, 0, -17.4]} length={15} />
+        <FenceRun position={[-13.4, 0, -13.1]} length={6} rotation={Math.PI / 2} />
+        <FenceRun position={[-13.4, 0, -1.8]} length={5} rotation={Math.PI / 2} />
+        <Cart position={[-24, 0, -3]} rotation={[0, 0.35, 0]} scale={0.8} />
+        <Crate position={[-25, 0, -1.8]} scale={0.65} />
+        <Barrel position={[-23, 0, -1.4]} scale={0.65} />
+        <Signpost position={[-13, 0, -5]} rotation={[0, -0.4, 0]} />
+      </group>
+      <group position={[-31, 0, 6]}>
+        <TerrainMound
+          position={[0, 0.018, 0.5]}
+          radiusX={5}
+          radiusZ={3.7}
+          height={0}
+          seed={67}
+          material={plazaMaterial}
+        />
+        <RigidBody type="fixed" colliders="cuboid"><Bakery rotation={[0, 0.6, 0]} /></RigidBody>
+        <Bunting position={[0, 2.8, 1]} />
+        <FlowerBed position={[3, 0, 1]} />
+        <Bench position={[4, 0, -1]} rotation={[0, -1.2, 0]} />
+      </group>
+      <NPC id="mimi" name="Mimi" position={[-18, 0, -5]} color="#D9553F" type="mouse" onInteract={() => setDialog('Mimi', 'The orchard keeps a scrapbook in smells: apple peel, rain, warm bread, and happy dogs.')} />
+
+      {/* Hilltop lookout, kept close enough to see from home. */}
+      <group position={[0, 0, 31]}>
+        <WoodenArch position={[0, 1.74, -3]} />
+        <Bench position={[0, 1.73, 2]} rotation={[0, Math.PI, 0]} />
+        <Streetlamp position={[-3.5, 1.63, 0]} />
+        <Streetlamp position={[3.5, 1.63, 0]} />
+        <PineTree position={[-6, 0.67, 3]} scale={1.2} />
+        <PineTree position={[6, 0.58, 4]} scale={1.25} />
+        <Rock position={[-5, 1.25, -2]} scale={1.3} />
+        <Rock position={[5, 1.25, -2]} scale={1.1} />
+        <Seagull position={[0, 5, 0]} pathRadius={7} speed={0.55} />
       </group>
 
+      {/* Sequential picnic flowers. */}
+      <FlowerQuestSpot position={[18, 0, 15]} color="#F6D35E" picked={Boolean(worldFlags.flower_buttercup)} />
+      <InteractionAnchor id="flower-buttercup" label="Pick buttercup" position={[18, 0.6, 15]} showQuestMarker={activeQuestId === 'picnic' && picnic?.currentObjectiveIndex === 1} onInteract={() => collectFlower(1, 'flower_buttercup', 'buttercup')} />
+      <FlowerQuestSpot position={[-14, 0, 20]} color="#83AEE0" picked={Boolean(worldFlags.flower_bluebell)} />
+      <InteractionAnchor id="flower-bluebell" label="Pick bluebell" position={[-14, 0.6, 20]} showQuestMarker={activeQuestId === 'picnic' && picnic?.currentObjectiveIndex === 2} onInteract={() => collectFlower(2, 'flower_bluebell', 'bluebell')} />
+      <FlowerQuestSpot position={[-22, 0, -8]} color="#EE9DB5" picked={Boolean(worldFlags.flower_orchard)} />
+      <InteractionAnchor id="flower-orchard" label="Pick pink blossom" position={[-22, 0.6, -8]} showQuestMarker={activeQuestId === 'picnic' && picnic?.currentObjectiveIndex === 3} onInteract={() => collectFlower(3, 'flower_orchard', 'pink orchard blossom')} />
+
+      {/* Memory trail. */}
+      <PawToken position={[-10.5, 0.12, 17]} found={Boolean(worldFlags.memory_pond)} color="#8B6A4D" />
+      <InteractionAnchor id="memory-pond" label="Remember pond walk" position={[-10.5, 0.5, 17]} showQuestMarker={activeQuestId === 'memories' && memories?.currentObjectiveIndex === 1} onInteract={() => findMemory(1, 'memory_pond', 'Willow Pond')} />
+      <PawToken position={[-14, 0.12, -7]} found={Boolean(worldFlags.memory_orchard)} color="#8B6A4D" />
+      <InteractionAnchor id="memory-orchard" label="Remember orchard walk" position={[-14, 0.5, -7]} showQuestMarker={activeQuestId === 'memories' && memories?.currentObjectiveIndex === 2} onInteract={() => findMemory(2, 'memory_orchard', 'Applebell Orchard')} />
+      <PawToken position={[0, 1.86, 28]} found={Boolean(worldFlags.memory_lookout)} color="#8B6A4D" />
+      <InteractionAnchor id="memory-lookout" label="Remember hilltop walk" position={[0, 2.1, 28]} showQuestMarker={activeQuestId === 'memories' && memories?.currentObjectiveIndex === 3} onInteract={() => findMemory(3, 'memory_lookout', 'the hilltop')} />
+
+      {/* Final evening lantern route. */}
+      <QuestLantern position={[-4, 0, -14]} lit={Boolean(worldFlags.lantern_porch)} />
+      <InteractionAnchor id="lantern-porch" label="Light porch lantern" position={[-4, 1, -14]} showQuestMarker={activeQuestId === 'lanterns' && lanterns?.currentObjectiveIndex === 1} onInteract={() => lightLantern(1, 'lantern_porch', 'porch')} />
+      <QuestLantern position={[13, 0, -13]} lit={Boolean(worldFlags.lantern_garden)} />
+      <InteractionAnchor id="lantern-garden" label="Light garden lantern" position={[13, 1, -13]} showQuestMarker={activeQuestId === 'lanterns' && lanterns?.currentObjectiveIndex === 2} onInteract={() => lightLantern(2, 'lantern_garden', 'garden')} />
+      <QuestLantern position={[-11, 0, 13]} lit={Boolean(worldFlags.lantern_pond)} />
+      <InteractionAnchor id="lantern-pond" label="Light pond lantern" position={[-11, 1, 13]} showQuestMarker={activeQuestId === 'lanterns' && lanterns?.currentObjectiveIndex === 3} onInteract={() => lightLantern(3, 'lantern_pond', 'pond')} />
+
+      {/* Clustered woodland masses frame sightlines instead of tracing the island rim. */}
+      {WOODLAND_TREES.map(({ position, pine, blossom, scale }) => (
+        pine
+          ? <PineTree key={`${position[0]}-${position[2]}`} position={position} scale={scale} />
+          : <Tree key={`${position[0]}-${position[2]}`} position={position} scale={scale} blossom={blossom} />
+      ))}
+      {[[-33, 0, 18], [31, 0, 18], [30, 0, -19], [-32, 0, -22]].map((position, index) => (
+        <Bush key={index} position={position as Position} scale={1.25 + index * 0.08} />
+      ))}
+      <Lantern position={[-7, 0, 8]} />
+      <Lantern position={[11, 0, 1]} />
     </group>
   );
 }

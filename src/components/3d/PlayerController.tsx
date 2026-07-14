@@ -13,6 +13,7 @@ const WALK_SPEED = 4;
 const RUN_SPEED = 7;
 const JUMP_FORCE = 6;
 const LERP_SPEED = 0.1;
+const CAMERA_OFFSET = new THREE.Vector3(0, 4.25, 7.25);
 
 export function PlayerController() {
   const bodyRef = useRef<RapierRigidBody>(null);
@@ -217,10 +218,8 @@ export function PlayerController() {
     
     // Camera Logic
     // Follow distance and height
-    const cameraOffset = new THREE.Vector3(0, 3, 5); 
-    
     // Calculate target camera position
-    targetCameraPos.current.copy(new THREE.Vector3(position.x, position.y, position.z)).add(cameraOffset);
+    targetCameraPos.current.set(position.x, position.y, position.z).add(CAMERA_OFFSET);
     
     // Smooth damp camera position
     state.camera.position.lerp(targetCameraPos.current, 0.1);

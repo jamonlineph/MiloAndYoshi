@@ -4,10 +4,11 @@
  */
 
 import { Suspense, useState, useEffect, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
-import { KeyboardControls, Loader } from '@react-three/drei';
+import { Environment, KeyboardControls, Lightformer, Loader, Sky } from '@react-three/drei';
 import { useGameStore } from './store/useGameStore';
+import * as THREE from 'three';
 
 // Main Scene Component
 import { GameScene } from './components/3d/GameScene';
@@ -97,6 +98,19 @@ function FloatingParticle({ delay, duration, x }: { delay: number; duration: num
   );
 }
 
+function RendererCalibration({ exposure }: { exposure: number }) {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    gl.outputColorSpace = THREE.SRGBColorSpace;
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.toneMappingExposure = exposure;
+    gl.shadowMap.type = THREE.PCFShadowMap;
+  }, [exposure, gl]);
+
+  return null;
+}
+
 export default function App() {
   const [started, setStarted] = useState(false);
   const [titleVisible, setTitleVisible] = useState(false);
@@ -112,10 +126,10 @@ export default function App() {
   }, [started]);
 
   const timeColors = {
-    morning: { bg: '#88AAB5', fog: '#88AAB5', light: '#FFF6EB', lightInt: 1.2, ambInt: 0.6 },
-    afternoon: { bg: '#71A3A5', fog: '#71A3A5', light: '#FFFAF0', lightInt: 1.3, ambInt: 0.65 },
-    sunset: { bg: '#E3926B', fog: '#E3926B', light: '#FFCD9E', lightInt: 1.1, ambInt: 0.5 },
-    evening: { bg: '#2B4257', fog: '#2B4257', light: '#99B2D1', lightInt: 0.5, ambInt: 0.3 },
+    morning: { bg: '#89AEBB', fog: '#9DB6B7', light: '#FFF1D4', lightInt: 2.4, ambInt: 0.42, hemiInt: 0.8, skyLight: '#BEE5F2', groundLight: '#596B47', sun: [-35, 28, -22] as [number, number, number], exposure: 1.08 },
+    afternoon: { bg: '#74A8B4', fog: '#9FB7AF', light: '#FFE5B6', lightInt: 2.8, ambInt: 0.38, hemiInt: 0.9, skyLight: '#C6E9F1', groundLight: '#526744', sun: [-24, 34, 18] as [number, number, number], exposure: 1.12 },
+    sunset: { bg: '#D88967', fog: '#C89678', light: '#FFB56F', lightInt: 2.3, ambInt: 0.32, hemiInt: 0.65, skyLight: '#B58AA1', groundLight: '#5C4A35', sun: [-38, 13, 25] as [number, number, number], exposure: 1.02 },
+    evening: { bg: '#253B52', fog: '#344B5D', light: '#8FAFDE', lightInt: 1.1, ambInt: 0.22, hemiInt: 0.45, skyLight: '#56769C', groundLight: '#202B28', sun: [-28, 18, -14] as [number, number, number], exposure: 0.82 },
   };
 
   const scheme = timeColors[timeOfDay as keyof typeof timeColors];
@@ -271,7 +285,7 @@ export default function App() {
               className="text-xs uppercase tracking-[6px] font-semibold mb-3 text-terracotta/60"
               style={{ animation: titleVisible ? 'slideUp 0.6s ease-out 0.3s both' : 'none' }}
             >
-              A Cozy Courier Tale
+              A Cozy Family Tale
             </div>
             
             <h1 
@@ -290,14 +304,14 @@ export default function App() {
               className="text-2xl sm:text-3xl font-bold mb-4 tracking-tighter text-ink font-display"
               style={{ animation: titleVisible ? 'slideUp 0.6s ease-out 0.7s both' : 'none' }}
             >
-              LETTERS BY THE TIDE
+              A DAY AT PAWPRINT BAY
             </h2>
             
             <p 
               className="text-lg sm:text-xl mb-8 font-semibold italic text-moss"
               style={{ animation: titleVisible ? 'slideUp 0.6s ease-out 0.9s both' : 'none' }}
             >
-              "Every little delivery brings someone home."
+              "Every little walk leads back home."
             </p>
             
             <button 
@@ -305,7 +319,7 @@ export default function App() {
               className="px-10 py-4 bg-orange text-ink border-2 border-ink rounded-sm font-bold text-lg hover:bg-terracotta hover:text-white transition-all shadow-[4px_4px_0_var(--color-ink)] active:translate-y-1 active:shadow-[0_0_0_var(--color-ink)] hover:-translate-y-1 hover:shadow-[6px_6px_0_var(--color-ink)]"
               style={{ animation: titleVisible ? 'slideUp 0.6s ease-out 1.1s both' : 'none' }}
             >
-              🐾 Begin Delivery
+              🐾 Begin the Day
             </button>
 
             <div 
@@ -328,34 +342,65 @@ export default function App() {
             shadows={settings.graphicsQuality !== 'low'} 
             camera={{ position: [0, 5, 10], fov: 45 }}
             dpr={settings.graphicsQuality === 'high' ? [1, 2] : 1}
+            gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
+            onCreated={({ gl }) => {
+              gl.outputColorSpace = THREE.SRGBColorSpace;
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = scheme.exposure;
+              gl.shadowMap.type = THREE.PCFShadowMap;
+            }}
           >
             <color attach="background" args={[scheme.bg]} />
-            <fog attach="fog" args={[scheme.fog, 15, 50]} />
+            <fog attach="fog" args={[scheme.fog, 34, 112]} />
+            <RendererCalibration exposure={scheme.exposure} />
+            <Sky
+              distance={450000}
+              sunPosition={scheme.sun}
+              inclination={0.55}
+              azimuth={0.24}
+              turbidity={8}
+              rayleigh={2.25}
+              mieCoefficient={0.006}
+              mieDirectionalG={0.82}
+            />
             
             <Suspense fallback={null}>
               <Physics timeStep="vary">
                 <GameScene />
                 <ambientLight intensity={scheme.ambInt} />
+                <hemisphereLight
+                  color={scheme.skyLight}
+                  groundColor={scheme.groundLight}
+                  intensity={scheme.hemiInt}
+                />
                 <directionalLight 
-                  position={[10, 15, 10]} 
+                  position={scheme.sun}
                   intensity={scheme.lightInt} 
                   castShadow 
-                  shadow-mapSize-width={2048} 
-                  shadow-mapSize-height={2048}
-                  shadow-camera-far={100}
-                  shadow-camera-left={-50}
-                  shadow-camera-right={50}
-                  shadow-camera-top={50}
-                  shadow-camera-bottom={-50}
+                  shadow-mapSize-width={settings.graphicsQuality === 'high' ? 4096 : 2048}
+                  shadow-mapSize-height={settings.graphicsQuality === 'high' ? 4096 : 2048}
+                  shadow-camera-near={0.5}
+                  shadow-camera-far={130}
+                  shadow-camera-left={-64}
+                  shadow-camera-right={64}
+                  shadow-camera-top={64}
+                  shadow-camera-bottom={-64}
                   color={scheme.light}
-                  shadow-bias={-0.0001}
+                  shadow-bias={-0.00018}
+                  shadow-normalBias={0.035}
                 />
               </Physics>
               {settings.graphicsQuality === 'high' && (
-                <EffectComposer>
-                  <Bloom luminanceThreshold={0.7} luminanceSmoothing={0.9} intensity={1.2} />
-                  <Vignette eskil={false} offset={0.1} darkness={0.9} />
-                </EffectComposer>
+                <>
+                  <Environment resolution={128} frames={1}>
+                    <Lightformer form="rect" intensity={1.8} color={scheme.light} scale={[18, 18, 18]} position={[-12, 18, 8]} rotation-x={-Math.PI / 2} />
+                    <Lightformer form="ring" intensity={0.65} color={scheme.skyLight} scale={32} position={[14, 8, -18]} target={[0, 0, 0]} />
+                  </Environment>
+                  <EffectComposer multisampling={4}>
+                    <Bloom luminanceThreshold={0.92} luminanceSmoothing={0.7} intensity={0.55} mipmapBlur />
+                    <Vignette eskil={false} offset={0.2} darkness={0.52} />
+                  </EffectComposer>
+                </>
               )}
             </Suspense>
           </Canvas>

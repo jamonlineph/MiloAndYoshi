@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../../../store/useGameStore';
 import { RoundedBox } from '@react-three/drei';
+import { FabricMaterial, FurMaterial, LeatherMaterial } from './CharacterMaterials';
 
 interface YoshiModelProps {
   velocityRef: React.MutableRefObject<THREE.Vector3>;
@@ -23,9 +24,9 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
   // Scarf/Neckerchief
   const scarfRef = useRef<THREE.Group>(null);
 
-  const yoshiOrange = "#D9773F";
-  const yoshiCream = "#F6E5C8";
-  const darkBrown = "#4A2D23";
+  const yoshiOrange = '#D87A43';
+  const yoshiCream = '#F3E2C3';
+  const darkBrown = '#3D2923';
 
   const prologueQuest = useGameStore(state => state.quests['prologue']);
   const isWearingNeckerchief = prologueQuest && (prologueQuest.currentObjectiveIndex >= 2 || prologueQuest.status === 'completed');
@@ -111,40 +112,39 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       {/* Main Orange Body */}
       <mesh castShadow receiveShadow position={[0, -0.05, 0]}>
         <RoundedBox args={[0.38, 0.35, 0.6]} radius={0.15} smoothness={4}>
-          <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+          <FurMaterial color={yoshiOrange} roughness={0.86} bumpScale={0.025} />
         </RoundedBox>
       </mesh>
       
-      {/* Cream Belly & Chest Plaque (Slightly embedded to avoid edge clipping) */}
-      <mesh castShadow receiveShadow position={[0, -0.1, 0.05]} rotation={[-0.1, 0, 0]}>
-        <RoundedBox args={[0.36, 0.28, 0.58]} radius={0.12} smoothness={4}>
-          <meshStandardMaterial color={yoshiCream} roughness={0.9} />
-        </RoundedBox>
+      {/* A front-only cream bib keeps Yoshi's orange coat readable from every angle. */}
+      <mesh castShadow receiveShadow position={[0, -0.08, 0.275]} scale={[0.82, 1.05, 0.32]}>
+        <sphereGeometry args={[0.19, 18, 14]} />
+        <FurMaterial color={yoshiCream} roughness={0.9} bumpScale={0.022} />
       </mesh>
 
       {/* Rump / Fluff */}
       <mesh castShadow receiveShadow position={[0, 0.05, -0.28]}>
         <sphereGeometry args={[0.22, 16, 16]} />
-        <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+        <FurMaterial color={yoshiOrange} roughness={0.86} bumpScale={0.025} />
       </mesh>
       
       {/* Fluffy Curled Shiba Tail */}
       <group ref={tailRef} position={[0, 0.15, -0.3]}>
          <mesh castShadow position={[0, 0.05, -0.05]}>
             <sphereGeometry args={[0.1, 16, 16]} />
-            <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+            <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
          <mesh castShadow position={[0, 0.12, -0.08]}>
             <sphereGeometry args={[0.09, 16, 16]} />
-            <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+            <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
          <mesh castShadow position={[0, 0.18, -0.02]}>
             <sphereGeometry args={[0.08, 16, 16]} />
-            <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+            <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
          <mesh castShadow position={[0, 0.15, 0.05]}>
             <sphereGeometry args={[0.07, 16, 16]} />
-            <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+            <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
       </group>
 
@@ -153,59 +153,78 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
         {/* Head Base */}
         <mesh castShadow position={[0, 0.05, 0]}>
           <sphereGeometry args={[0.24, 16, 16]} />
-          <meshStandardMaterial color={yoshiOrange} roughness={0.7} />
+          <FurMaterial color={yoshiOrange} roughness={0.84} bumpScale={0.024} />
         </mesh>
         
         {/* Cheeks */}
         <mesh castShadow position={[0.18, -0.02, 0.05]}>
           <sphereGeometry args={[0.14, 16, 16]} />
-          <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+          <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
         <mesh castShadow position={[-0.18, -0.02, 0.05]}>
           <sphereGeometry args={[0.14, 16, 16]} />
-          <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+          <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
 
         {/* Muzzle (white) */}
         <mesh castShadow position={[0, -0.05, 0.2]}>
           <sphereGeometry args={[0.16, 16, 16]} />
-          <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+          <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
         
         {/* Nose (black) */}
         <mesh castShadow position={[0, 0.02, 0.32]}>
           <sphereGeometry args={[0.04, 16, 16]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.4} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.3} clearcoat={0.65} clearcoatRoughness={0.24} />
         </mesh>
+
+        {/* Open, tongue-out smile for a friendly Shiba expression. */}
+        <group position={[0, -0.125, 0.325]}>
+          <mesh scale={[0.9, 0.5, 0.3]} castShadow>
+            <sphereGeometry args={[0.078, 14, 10]} />
+            <meshStandardMaterial color="#4B2928" roughness={0.7} />
+          </mesh>
+          <mesh position={[0, -0.035, 0.026]} scale={[0.55, 0.36, 0.18]}>
+            <sphereGeometry args={[0.066, 12, 8]} />
+            <meshStandardMaterial color="#D98582" roughness={0.66} />
+          </mesh>
+        </group>
+
+        {[-0.205, 0.205].map((x) => (
+          <mesh key={`blush-${x}`} position={[x, -0.045, 0.165]} scale={[1, 0.55, 0.25]}>
+            <sphereGeometry args={[0.045, 10, 8]} />
+            <meshStandardMaterial color="#E79A86" transparent opacity={0.16} roughness={0.9} />
+          </mesh>
+        ))}
 
         {/* Eyes (dark round) */}
         <mesh castShadow position={[0.12, 0.1, 0.2]} rotation={[-0.2, 0.2, 0]}>
-          <sphereGeometry args={[0.035, 16, 16]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.2} />
+          <sphereGeometry args={[0.041, 16, 16]} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.45} />
         </mesh>
         <mesh castShadow position={[-0.12, 0.1, 0.2]} rotation={[-0.2, -0.2, 0]}>
-          <sphereGeometry args={[0.035, 16, 16]} />
-          <meshStandardMaterial color={darkBrown} roughness={0.2} />
+          <sphereGeometry args={[0.041, 16, 16]} />
+          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.45} />
         </mesh>
         
         {/* Eye Highlights */}
         <mesh castShadow position={[0.13, 0.12, 0.22]} rotation={[-0.2, 0.2, 0]}>
-          <sphereGeometry args={[0.01, 8, 8]} />
-          <meshStandardMaterial color="white" roughness={0.1} />
+          <sphereGeometry args={[0.012, 8, 8]} />
+          <meshBasicMaterial color="#FFFDF6" />
         </mesh>
         <mesh castShadow position={[-0.11, 0.12, 0.22]} rotation={[-0.2, -0.2, 0]}>
-          <sphereGeometry args={[0.01, 8, 8]} />
-          <meshStandardMaterial color="white" roughness={0.1} />
+          <sphereGeometry args={[0.012, 8, 8]} />
+          <meshBasicMaterial color="#FFFDF6" />
         </mesh>
 
         {/* Eyebrows */}
-        <mesh castShadow position={[0.1, 0.18, 0.15]} rotation={[0, 0, -0.1]}>
-          <capsuleGeometry args={[0.015, 0.04, 8, 8]} />
-          <meshStandardMaterial color={yoshiCream} />
+        <mesh castShadow position={[0.1, 0.18, 0.15]} rotation={[0, 0, Math.PI / 2 - 0.12]}>
+          <capsuleGeometry args={[0.013, 0.055, 8, 8]} />
+          <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
-        <mesh castShadow position={[-0.1, 0.18, 0.15]} rotation={[0, 0, 0.1]}>
-          <capsuleGeometry args={[0.015, 0.04, 8, 8]} />
-          <meshStandardMaterial color={yoshiCream} />
+        <mesh castShadow position={[-0.1, 0.18, 0.15]} rotation={[0, 0, Math.PI / 2 + 0.12]}>
+          <capsuleGeometry args={[0.013, 0.055, 8, 8]} />
+          <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
         
         {/* Ears */}
@@ -213,24 +232,24 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
         <group ref={earL} position={[0.15, 0.2, 0]}>
           <mesh castShadow position={[0, 0.1, 0]} rotation={[0, 0, -0.1]}>
             <coneGeometry args={[0.08, 0.2, 16]} />
-            <meshStandardMaterial color={yoshiOrange} roughness={0.7} />
+            <FurMaterial color={yoshiOrange} roughness={0.86} />
           </mesh>
           {/* Inner Ear */}
           <mesh castShadow position={[0.01, 0.1, 0.03]} rotation={[0, 0, -0.1]}>
             <coneGeometry args={[0.05, 0.15, 16]} />
-            <meshStandardMaterial color="#E8A95B" roughness={0.9} />
+            <FurMaterial color="#E9A77B" roughness={0.9} bumpScale={0.014} />
           </mesh>
         </group>
         {/* Right Ear */}
         <group ref={earR} position={[-0.15, 0.2, 0]}>
           <mesh castShadow position={[0, 0.1, 0]} rotation={[0, 0, 0.1]}>
             <coneGeometry args={[0.08, 0.2, 16]} />
-            <meshStandardMaterial color={yoshiOrange} roughness={0.7} />
+            <FurMaterial color={yoshiOrange} roughness={0.86} />
           </mesh>
           {/* Inner Ear */}
           <mesh castShadow position={[-0.01, 0.1, 0.03]} rotation={[0, 0, 0.1]}>
             <coneGeometry args={[0.05, 0.15, 16]} />
-            <meshStandardMaterial color="#E8A95B" roughness={0.9} />
+            <FurMaterial color="#E9A77B" roughness={0.9} bumpScale={0.014} />
           </mesh>
         </group>
       </group>
@@ -240,21 +259,21 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
          {/* Main loop */}
          <mesh castShadow rotation={[Math.PI / 4, 0, 0]}>
             <torusGeometry args={[0.18, 0.04, 16, 32]} />
-            <meshStandardMaterial color="#D93D4A" roughness={0.8} />
+            <FabricMaterial color="#C95055" roughness={0.9} />
          </mesh>
          {/* Knot */}
          <mesh castShadow position={[0, -0.2, 0.1]}>
             <sphereGeometry args={[0.06, 16, 16]} />
-            <meshStandardMaterial color="#D93D4A" roughness={0.8} />
+            <FabricMaterial color="#C95055" roughness={0.9} />
          </mesh>
          {/* Tails */}
          <mesh castShadow position={[0.05, -0.3, 0.1]} rotation={[0, 0, -0.2]}>
             <capsuleGeometry args={[0.03, 0.1, 8, 8]} />
-            <meshStandardMaterial color="#D93D4A" roughness={0.8} />
+            <FabricMaterial color="#C95055" roughness={0.9} />
          </mesh>
          <mesh castShadow position={[-0.05, -0.28, 0.1]} rotation={[0, 0, 0.2]}>
             <capsuleGeometry args={[0.03, 0.08, 8, 8]} />
-            <meshStandardMaterial color="#D93D4A" roughness={0.8} />
+            <FabricMaterial color="#C95055" roughness={0.9} />
          </mesh>
       </group>
       
@@ -263,13 +282,13 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
         <group>
           <mesh castShadow position={[0.22, 0.05, 0]} rotation={[0, -0.1, -Math.PI / 12]}>
              <RoundedBox args={[0.1, 0.25, 0.3]} radius={0.05} smoothness={4}>
-               <meshStandardMaterial color="#A68A72" roughness={0.9} />
+               <LeatherMaterial color="#A68A72" roughness={0.9} />
              </RoundedBox>
           </mesh>
           {/* Satchel Flap */}
           <mesh castShadow position={[0.28, 0.12, 0]} rotation={[0, -0.1, 0.2]}>
              <RoundedBox args={[0.02, 0.15, 0.3]} radius={0.01} smoothness={4}>
-               <meshStandardMaterial color="#A68A72" roughness={0.9} />
+               <LeatherMaterial color="#A68A72" roughness={0.9} />
              </RoundedBox>
           </mesh>
           {/* Buckle */}
@@ -280,7 +299,7 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
           {/* Satchel Strap */}
           <mesh castShadow position={[0, 0.15, 0]} rotation={[0, 0, Math.PI / 6]}>
               <torusGeometry args={[0.25, 0.02, 8, 32]} />
-              <meshStandardMaterial color="#8C6B52" roughness={0.9} />
+              <LeatherMaterial color="#8C6B52" roughness={0.9} />
           </mesh>
           {/* Badge */}
           <mesh castShadow position={[-0.2, 0.25, 0.1]} rotation={[0, 0, Math.PI / 4]}>
@@ -295,12 +314,12 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       <group ref={legFL} position={[0.12, -0.1, 0.2]}>
          <mesh castShadow position={[0, -0.1, 0]}>
            <capsuleGeometry args={[0.05, 0.15, 8, 8]} />
-           <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+           <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
          {/* Paw */}
          <mesh castShadow position={[0, -0.18, 0.02]}>
            <sphereGeometry args={[0.06, 16, 16]} />
-           <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+           <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
       </group>
       
@@ -308,12 +327,12 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       <group ref={legFR} position={[-0.12, -0.1, 0.2]}>
          <mesh castShadow position={[0, -0.1, 0]}>
            <capsuleGeometry args={[0.05, 0.15, 8, 8]} />
-           <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+           <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
           {/* Paw */}
           <mesh castShadow position={[0, -0.18, 0.02]}>
            <sphereGeometry args={[0.06, 16, 16]} />
-           <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+           <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
       </group>
 
@@ -321,12 +340,12 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       <group ref={legBL} position={[0.15, -0.1, -0.2]}>
          <mesh castShadow position={[0, -0.1, 0]}>
            <capsuleGeometry args={[0.06, 0.15, 8, 8]} />
-           <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+           <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
           {/* Paw */}
           <mesh castShadow position={[0, -0.18, 0.02]}>
            <sphereGeometry args={[0.06, 16, 16]} />
-           <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+           <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
       </group>
 
@@ -334,12 +353,12 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       <group ref={legBR} position={[-0.15, -0.1, -0.2]}>
          <mesh castShadow position={[0, -0.1, 0]}>
            <capsuleGeometry args={[0.06, 0.15, 8, 8]} />
-           <meshStandardMaterial color={yoshiOrange} roughness={0.8} />
+           <FurMaterial color={yoshiOrange} roughness={0.86} />
          </mesh>
          {/* Paw */}
           <mesh castShadow position={[0, -0.18, 0.02]}>
            <sphereGeometry args={[0.06, 16, 16]} />
-           <meshStandardMaterial color={yoshiCream} roughness={0.9} />
+           <FurMaterial color={yoshiCream} roughness={0.9} />
          </mesh>
       </group>
 

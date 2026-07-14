@@ -132,8 +132,8 @@ const initialState = {
   stamps: [],
   timeOfDay: 'morning' as TimeOfDay,
   worldFlags: {},
-  spawnPoint: { x: 0, y: 2, z: 8 },
-  playerPosition: { x: 0, y: 1, z: 0 },
+  spawnPoint: { x: 0, y: 2, z: -5 },
+  playerPosition: { x: 0, y: 1, z: -5 },
   hasMilo: true,
   miloCommand: 'follow' as CompanionCommand,
   miloFriendship: 0,
@@ -294,27 +294,16 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: 'yoshi-milo-save',
-      version: 3,
+      version: 4,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<GameState>;
-        let quests = state.quests;
-
-        if (version < 2) {
-          quests = state.quests && state.activeQuestId && state.quests[state.activeQuestId]
-            ? {
-                ...state.quests,
-                [state.activeQuestId]: {
-                  ...state.quests[state.activeQuestId],
-                  status: 'active' as QuestStatus,
-                },
-              }
-            : state.quests;
-        }
-
-        if (version < 3) {
+        if (version < 4) {
           return {
             ...state,
-            quests,
+            quests: {},
+            activeQuestId: null,
+            worldFlags: {},
+            spawnPoint: { x: 0, y: 2, z: -5 },
             hasMilo: true,
           } as any;
         }

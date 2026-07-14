@@ -6,6 +6,8 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    // GitHub Pages serves this project from /MiloAndYoshi/; local dev stays at /.
+    base: process.env.VITE_BASE || '/',
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
