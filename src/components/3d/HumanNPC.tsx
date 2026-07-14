@@ -24,28 +24,32 @@ interface HumanNPCProps {
   showQuestMarker?: boolean;
 }
 
-interface EyeProps {
+interface HappyEyeProps {
   x: number;
   y?: number;
-  iris?: string;
-  narrow?: boolean;
+  color?: string;
+  lashes?: boolean;
 }
 
-function Eye({ x, y = 1.72, iris = '#2C211E', narrow = false }: EyeProps) {
+function HappyEye({ x, y = 1.705, color = '#2C211E', lashes = false }: HappyEyeProps) {
+  const side = Math.sign(x);
   return (
-    <group position={[x, y, 0.305]}>
-      <mesh scale={[1.2, narrow ? 0.58 : 0.72, 0.42]} castShadow>
-        <sphereGeometry args={[0.047, 14, 10]} />
-        <meshStandardMaterial color="#FFF8ED" roughness={0.5} />
+    <group position={[x, y, 0.326]} rotation={[0, 0, side * -0.08]}>
+      {/* A raised half-circle reads as a closed, genuinely smiling eye. */}
+      <mesh scale={[1.08, 0.78, 0.6]} castShadow>
+        <torusGeometry args={[0.052, 0.0115, 8, 18, Math.PI]} />
+        <meshStandardMaterial color={color} roughness={0.78} />
       </mesh>
-      <mesh position={[0, -0.002, 0.036]} scale={[1, narrow ? 0.82 : 1, 0.42]}>
-        <sphereGeometry args={[0.026, 12, 10]} />
-        <meshStandardMaterial color={iris} roughness={0.32} />
+      <mesh position={[side * 0.054, 0.003, -0.002]} rotation={[0, 0, side * 0.65]}>
+        <capsuleGeometry args={[0.006, 0.026, 5, 7]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
       </mesh>
-      <mesh position={[0.009, 0.008, 0.049]}>
-        <sphereGeometry args={[0.007, 7, 6]} />
-        <meshBasicMaterial color="#FFF8EB" />
-      </mesh>
+      {lashes && (
+        <mesh position={[side * 0.066, 0.016, -0.001]} rotation={[0, 0, side * 0.82]}>
+          <capsuleGeometry args={[0.004, 0.022, 5, 7]} />
+          <meshStandardMaterial color={color} roughness={0.82} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -53,21 +57,21 @@ function Eye({ x, y = 1.72, iris = '#2C211E', narrow = false }: EyeProps) {
 function OpenSmile({ y = 1.575, width = 1 }: { y?: number; width?: number }) {
   return (
     <group position={[0, y, 0.31]}>
-      <mesh scale={[width, 0.5, 0.3]} castShadow>
+      <mesh scale={[width, 0.43, 0.28]} castShadow>
         <sphereGeometry args={[0.105, 16, 10]} />
         <meshStandardMaterial color="#5B2B2B" roughness={0.62} />
       </mesh>
-      <mesh position={[0, 0.025, 0.029]} scale={[width * 0.92, 0.24, 0.18]}>
+      <mesh position={[0, 0.023, 0.029]} scale={[width * 0.88, 0.2, 0.16]}>
         <sphereGeometry args={[0.095, 14, 8]} />
         <meshStandardMaterial color="#FFF9EF" roughness={0.45} />
       </mesh>
-      <mesh position={[0, -0.035, 0.025]} scale={[width * 0.5, 0.14, 0.16]}>
+      <mesh position={[0, -0.031, 0.027]} scale={[width * 0.48, 0.13, 0.16]}>
         <sphereGeometry args={[0.08, 12, 8]} />
         <meshStandardMaterial color="#C97876" roughness={0.65} />
       </mesh>
       {[-1, 1].map((side) => (
         <mesh key={side} position={[side * 0.093 * width, 0.025, 0.012]} rotation={[0, 0, side * -0.55]}>
-          <capsuleGeometry args={[0.007, 0.025, 5, 7]} />
+          <capsuleGeometry args={[0.007, 0.03, 5, 7]} />
           <meshStandardMaterial color="#713E39" roughness={0.72} />
         </mesh>
       ))}
@@ -123,13 +127,13 @@ function PortraitFace({ variant, skin, skinShadow }: PortraitFaceProps) {
           <SkinMaterial color={skinShadow} roughness={0.78} />
         </mesh>
       ))}
-      <Eye x={isJam ? -0.103 : -0.094} y={isJam ? 1.72 : 1.725} iris={isJam ? '#241C18' : '#3A2620'} narrow={!isJam} />
-      <Eye x={isJam ? 0.103 : 0.094} y={isJam ? 1.72 : 1.725} iris={isJam ? '#241C18' : '#3A2620'} narrow={!isJam} />
+      <HappyEye x={isJam ? -0.103 : -0.096} y={isJam ? 1.695 : 1.7} color={isJam ? '#211917' : '#432923'} lashes={!isJam} />
+      <HappyEye x={isJam ? 0.103 : 0.096} y={isJam ? 1.695 : 1.7} color={isJam ? '#211917' : '#432923'} lashes={!isJam} />
       {[-0.1, 0.1].map((x) => (
         <mesh
           key={`brow-${x}`}
           position={[x, 1.81, 0.302]}
-          rotation={[0, 0, Math.PI / 2 + (x < 0 ? -0.1 : 0.1)]}
+          rotation={[0, 0, Math.PI / 2 + (x < 0 ? -0.2 : 0.2)]}
         >
           <capsuleGeometry args={[isJam ? 0.013 : 0.01, isJam ? 0.105 : 0.095, 6, 8]} />
           <meshStandardMaterial color={isJam ? '#211A18' : '#4A2D27'} roughness={0.86} />
@@ -139,13 +143,13 @@ function PortraitFace({ variant, skin, skinShadow }: PortraitFaceProps) {
         <sphereGeometry args={[isJam ? 0.052 : 0.045, 12, 9]} />
         <SkinMaterial color={skinShadow} roughness={0.72} />
       </mesh>
-      {[-0.17, 0.17].map((x) => (
-        <mesh key={`cheek-${x}`} position={[x, 1.625, 0.287]} scale={[1.15, 0.7, 0.3]}>
-          <sphereGeometry args={[0.047, 10, 8]} />
-          <meshStandardMaterial color={isJam ? '#D88468' : '#EC9D91'} transparent opacity={0.2} roughness={0.9} />
+      {[-0.165, 0.165].map((x) => (
+        <mesh key={`cheek-${x}`} position={[x, 1.625, 0.3]} scale={[1.25, 0.66, 0.28]}>
+          <sphereGeometry args={[0.052, 12, 9]} />
+          <meshStandardMaterial color={isJam ? '#E68B70' : '#F39A93'} transparent opacity={0.28} roughness={0.92} />
         </mesh>
       ))}
-      <OpenSmile y={isJam ? 1.555 : 1.565} width={isJam ? 1.02 : 0.84} />
+      <OpenSmile y={isJam ? 1.56 : 1.565} width={isJam ? 0.96 : 0.9} />
       {!isJam && [-0.289, 0.289].map((x) => (
         <mesh key={`stud-${x}`} position={[x, 1.665, 0.055]}>
           <sphereGeometry args={[0.018, 8, 6]} />

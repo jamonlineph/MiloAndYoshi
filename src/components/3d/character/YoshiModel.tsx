@@ -24,8 +24,8 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
   // Scarf/Neckerchief
   const scarfRef = useRef<THREE.Group>(null);
 
-  const yoshiOrange = '#D87A43';
-  const yoshiCream = '#F3E2C3';
+  const yoshiOrange = '#DE824B';
+  const yoshiCream = '#F7E9CE';
   const darkBrown = '#3D2923';
 
   const prologueQuest = useGameStore(state => state.quests['prologue']);
@@ -149,81 +149,108 @@ export function YoshiModel({ velocityRef, isGrounded }: YoshiModelProps) {
       </group>
 
       {/* Head Group */}
-      <group ref={headRef} position={[0, 0.25, 0.35]}>
+      <group ref={headRef} position={[0, 0.265, 0.35]}>
         {/* Head Base */}
-        <mesh castShadow position={[0, 0.05, 0]}>
-          <sphereGeometry args={[0.24, 16, 16]} />
+        <mesh castShadow position={[0, 0.055, 0]} scale={[1.03, 1, 0.97]}>
+          <sphereGeometry args={[0.255, 20, 18]} />
           <FurMaterial color={yoshiOrange} roughness={0.84} bumpScale={0.024} />
         </mesh>
         
         {/* Cheeks */}
-        <mesh castShadow position={[0.18, -0.02, 0.05]}>
-          <sphereGeometry args={[0.14, 16, 16]} />
+        <mesh castShadow position={[0.178, -0.025, 0.065]} scale={[1, 0.95, 0.9]}>
+          <sphereGeometry args={[0.135, 18, 16]} />
           <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
-        <mesh castShadow position={[-0.18, -0.02, 0.05]}>
-          <sphereGeometry args={[0.14, 16, 16]} />
+        <mesh castShadow position={[-0.178, -0.025, 0.065]} scale={[1, 0.95, 0.9]}>
+          <sphereGeometry args={[0.135, 18, 16]} />
           <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
 
         {/* Muzzle (white) */}
-        <mesh castShadow position={[0, -0.05, 0.2]}>
-          <sphereGeometry args={[0.16, 16, 16]} />
+        <mesh castShadow position={[0, -0.055, 0.205]} scale={[1, 0.9, 0.94]}>
+          <sphereGeometry args={[0.148, 18, 16]} />
           <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
         
         {/* Nose (black) */}
-        <mesh castShadow position={[0, 0.02, 0.32]}>
+        <mesh castShadow position={[0, 0.018, 0.326]} scale={[1.12, 0.9, 0.9]}>
           <sphereGeometry args={[0.04, 16, 16]} />
           <meshPhysicalMaterial color={darkBrown} roughness={0.3} clearcoat={0.65} clearcoatRoughness={0.24} />
         </mesh>
 
         {/* Open, tongue-out smile for a friendly Shiba expression. */}
-        <group position={[0, -0.125, 0.325]}>
-          <mesh scale={[0.9, 0.5, 0.3]} castShadow>
-            <sphereGeometry args={[0.078, 14, 10]} />
+        <group position={[0, -0.13, 0.326]}>
+          <mesh scale={[0.92, 0.46, 0.28]} castShadow>
+            <sphereGeometry args={[0.08, 16, 10]} />
             <meshStandardMaterial color="#4B2928" roughness={0.7} />
           </mesh>
-          <mesh position={[0, -0.035, 0.026]} scale={[0.55, 0.36, 0.18]}>
-            <sphereGeometry args={[0.066, 12, 8]} />
-            <meshStandardMaterial color="#D98582" roughness={0.66} />
+          <mesh position={[0, -0.038, 0.028]} scale={[0.58, 0.39, 0.19]}>
+            <sphereGeometry args={[0.068, 12, 8]} />
+            <meshStandardMaterial color="#E58E8A" roughness={0.66} />
           </mesh>
         </group>
 
-        {[-0.205, 0.205].map((x) => (
-          <mesh key={`blush-${x}`} position={[x, -0.045, 0.165]} scale={[1, 0.55, 0.25]}>
-            <sphereGeometry args={[0.045, 10, 8]} />
-            <meshStandardMaterial color="#E79A86" transparent opacity={0.16} roughness={0.9} />
+        {[-1, 1].map((side) => (
+          <mesh key={`smile-corner-${side}`} position={[side * 0.064, -0.095, 0.319]} rotation={[0, 0, side * -0.68]}>
+            <capsuleGeometry args={[0.006, 0.032, 5, 7]} />
+            <meshStandardMaterial color="#694039" roughness={0.78} />
           </mesh>
         ))}
 
-        {/* Eyes (dark round) */}
-        <mesh castShadow position={[0.12, 0.1, 0.2]} rotation={[-0.2, 0.2, 0]}>
-          <sphereGeometry args={[0.041, 16, 16]} />
-          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.45} />
+        {[-0.205, 0.205].map((x) => (
+          <mesh key={`blush-${x}`} position={[x, -0.043, 0.175]} scale={[1.08, 0.58, 0.25]}>
+            <sphereGeometry args={[0.048, 10, 8]} />
+            <meshStandardMaterial color="#EE9B88" transparent opacity={0.24} roughness={0.92} />
+          </mesh>
+        ))}
+
+        {/* Large, softly oval eyes with warm irises and two-point catchlights. */}
+        <mesh castShadow position={[0.125, 0.105, 0.211]} rotation={[-0.16, 0.2, -0.05]} scale={[1, 1.08, 0.78]}>
+          <sphereGeometry args={[0.052, 18, 16]} />
+          <meshPhysicalMaterial color="#59382D" roughness={0.2} clearcoat={0.64} clearcoatRoughness={0.16} />
         </mesh>
-        <mesh castShadow position={[-0.12, 0.1, 0.2]} rotation={[-0.2, -0.2, 0]}>
-          <sphereGeometry args={[0.041, 16, 16]} />
-          <meshPhysicalMaterial color={darkBrown} roughness={0.24} clearcoat={0.45} />
+        <mesh castShadow position={[-0.125, 0.105, 0.211]} rotation={[-0.16, -0.2, 0.05]} scale={[1, 1.08, 0.78]}>
+          <sphereGeometry args={[0.052, 18, 16]} />
+          <meshPhysicalMaterial color="#59382D" roughness={0.2} clearcoat={0.64} clearcoatRoughness={0.16} />
         </mesh>
-        
+        {[0.125, -0.125].map((x) => (
+          <mesh key={`pupil-${x}`} position={[x, 0.103, 0.249]} scale={[0.94, 1.04, 0.55]}>
+            <sphereGeometry args={[0.033, 14, 12]} />
+            <meshPhysicalMaterial color={darkBrown} roughness={0.18} clearcoat={0.72} clearcoatRoughness={0.12} />
+          </mesh>
+        ))}
+
+        {/* Curved upper lids make the sparkling eyes feel happily squinted. */}
+        {[0.125, -0.125].map((x) => (
+          <mesh key={`lid-${x}`} position={[x, 0.115, 0.256]} rotation={[0, 0, x > 0 ? -0.08 : 0.08]} scale={[1, 0.68, 0.5]}>
+            <torusGeometry args={[0.05, 0.006, 6, 16, Math.PI]} />
+            <meshStandardMaterial color="#714333" roughness={0.82} />
+          </mesh>
+        ))}
+
         {/* Eye Highlights */}
-        <mesh castShadow position={[0.13, 0.12, 0.22]} rotation={[-0.2, 0.2, 0]}>
-          <sphereGeometry args={[0.012, 8, 8]} />
+        <mesh position={[0.137, 0.128, 0.274]}>
+          <sphereGeometry args={[0.013, 8, 8]} />
           <meshBasicMaterial color="#FFFDF6" />
         </mesh>
-        <mesh castShadow position={[-0.11, 0.12, 0.22]} rotation={[-0.2, -0.2, 0]}>
-          <sphereGeometry args={[0.012, 8, 8]} />
+        <mesh position={[-0.113, 0.128, 0.274]}>
+          <sphereGeometry args={[0.013, 8, 8]} />
           <meshBasicMaterial color="#FFFDF6" />
         </mesh>
+        {[0.112, -0.138].map((x) => (
+          <mesh key={`small-glint-${x}`} position={[x, 0.095, 0.276]}>
+            <sphereGeometry args={[0.0055, 7, 7]} />
+            <meshBasicMaterial color="#FFF7E8" />
+          </mesh>
+        ))}
 
         {/* Eyebrows */}
-        <mesh castShadow position={[0.1, 0.18, 0.15]} rotation={[0, 0, Math.PI / 2 - 0.12]}>
-          <capsuleGeometry args={[0.013, 0.055, 8, 8]} />
+        <mesh castShadow position={[0.105, 0.194, 0.158]} rotation={[0, 0, Math.PI / 2 - 0.2]}>
+          <capsuleGeometry args={[0.014, 0.058, 8, 8]} />
           <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
-        <mesh castShadow position={[-0.1, 0.18, 0.15]} rotation={[0, 0, Math.PI / 2 + 0.12]}>
-          <capsuleGeometry args={[0.013, 0.055, 8, 8]} />
+        <mesh castShadow position={[-0.105, 0.194, 0.158]} rotation={[0, 0, Math.PI / 2 + 0.2]}>
+          <capsuleGeometry args={[0.014, 0.058, 8, 8]} />
           <FurMaterial color={yoshiCream} roughness={0.9} />
         </mesh>
         
