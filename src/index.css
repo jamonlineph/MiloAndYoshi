@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #f5f2ed;
+  --color-orange: #e67e22;
+  --color-moss: #8a9a5b;
+  --color-teal: #66999b;
+  --color-terracotta: #c05c48;
+  --color-ink: #3e2723;
+  --color-paper: rgba(255, 253, 248, 0.92);
+  --font-sans: "Montserrat", sans-serif;
+  --font-display: "Playfair Display", serif;
+}
+
+@layer base {
+  body {
+    user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    overflow: hidden;
+  }
+}
