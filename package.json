@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "milo-and-yoshi-pawprint-bay",
   "private": true,
   "version": "0.0.0",
+  "description": "A cozy 3D browser adventure about Yoshi, Milo, Paula, Jam, and a day at Pawprint Bay.",
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
