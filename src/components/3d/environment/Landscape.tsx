@@ -272,8 +272,10 @@ function makeClusteredScatter(count: number, seed: number, radiusScale = 1) {
 export function LandscapeDetail() {
   const grassRef = useRef<THREE.InstancedMesh>(null);
   const rockRef = useRef<THREE.InstancedMesh>(null);
-  const grass = useMemo(() => makeClusteredScatter(170, 1138), []);
-  const rocks = useMemo(() => makeClusteredScatter(30, 7331, 0.8), []);
+  // Keep the island edges alive without letting background scatter compete with
+  // the village routes and the quest spaces.
+  const grass = useMemo(() => makeClusteredScatter(96, 1138), []);
+  const rocks = useMemo(() => makeClusteredScatter(16, 7331, 0.8), []);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
   useLayoutEffect(() => {

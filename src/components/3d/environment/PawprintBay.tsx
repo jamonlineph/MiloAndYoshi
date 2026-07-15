@@ -15,6 +15,7 @@ import {
   Cart,
   Clothesline,
   Crate,
+  Fountain,
   Lantern,
   Mailbox,
   Signpost,
@@ -39,7 +40,7 @@ import {
   Shoreline,
   TerrainMound,
 } from './Landscape';
-import { hillGrassMaterial, plazaMaterial, sandMaterial, soilMaterial } from './materials';
+import { grassMaterial, hillGrassMaterial, plazaMaterial, sandMaterial, soilMaterial } from './materials';
 import { Water } from './Water';
 
 type Position = [number, number, number];
@@ -432,20 +433,20 @@ export function PawprintBay() {
           scaleZ={0.96}
         />
 
-        <CurvedPath points={[[0, 0, -17], [0.5, 0, -10], [-1.5, 0, -4], [-1, 0, 1]]} width={4.2} />
-        <CurvedPath points={[[-1, 0, 1], [5, 0, -1], [10, 0, -5], [16, 0, -8], [22, 0, -8]]} width={3.8} />
-        <CurvedPath points={[[3, 0, 3], [8, 0, 7], [13, 0, 12], [18, 0, 18]]} width={3.7} />
-        <CurvedPath points={[[-2, 0, 2], [-6, 0, 6], [-10, 0, 12], [-11, 0, 18]]} width={3.7} />
-        <CurvedPath points={[[-11, 0, 13], [-15, 0, 8], [-17, 0, 2], [-18, 0, -5]]} width={3.5} />
-        <CurvedPath points={[[-18, 0, -5], [-12, 0, -6], [-7, 0, -5], [-1.5, 0, -4]]} width={3.5} />
-        <CurvedPath points={[[-17, 0, 2], [-22, 0, 3], [-27, 0, 5], [-31, 0, 6]]} width={3.2} />
-        <CurvedPath points={[[2, 0, 3], [4, 0, 9], [2, 0.04, 16], [0.5, 0.3, 22], [0, 1.2, 25], [0, 1.72, 29]]} width={3.4} />
+        <CurvedPath points={[[0, 0, -17], [0.5, 0, -10], [-1.5, 0, -4], [-1, 0, 1]]} width={3.35} />
+        <CurvedPath points={[[-1, 0, 1], [5, 0, -1], [10, 0, -5], [16, 0, -8], [22, 0, -8]]} width={3.15} />
+        <CurvedPath points={[[3, 0, 3], [8, 0, 7], [13, 0, 12], [18, 0, 18]]} width={3.05} />
+        <CurvedPath points={[[-2, 0, 2], [-6, 0, 6], [-10, 0, 12], [-11, 0, 18]]} width={3.05} />
+        <CurvedPath points={[[-11, 0, 13], [-15, 0, 8], [-17, 0, 2], [-18, 0, -5]]} width={2.9} />
+        <CurvedPath points={[[-18, 0, -5], [-12, 0, -6], [-7, 0, -5], [-1.5, 0, -4]]} width={2.9} />
+        <CurvedPath points={[[-17, 0, 2], [-22, 0, 3], [-27, 0, 5], [-31, 0, 6]]} width={2.7} />
+        <CurvedPath points={[[2, 0, 3], [4, 0, 9], [2, 0.04, 16], [0.5, 0.3, 22], [0, 1.2, 25], [0, 1.72, 29]]} width={2.95} />
 
         <TerrainMound
           position={[-1, 0.018, 1]}
-          radiusX={6.2}
-          radiusZ={4.8}
-          height={0}
+          radiusX={7.2}
+          radiusZ={5.6}
+          height={0.06}
           seed={28}
           material={plazaMaterial}
         />
@@ -481,17 +482,17 @@ export function PawprintBay() {
         <Clothesline position={[5.5, 0, -1.5]} rotation={[0, Math.PI / 2, 0]} />
         <FlowerBed position={[-4.3, 0, 1.2]} rotation={[0, 0.2, 0]} />
         <FlowerBed position={[4.2, 0, 1.2]} rotation={[0, -0.2, 0]} />
-        <Bench position={[-5.3, 0, 4]} rotation={[0, 0.55, 0]} />
+        <Bench position={[-5.1, 0, 3.7]} rotation={[0, 0.55, 0]} />
         <Bunting position={[0, 3.8, 2.6]} scale={1.2} />
       </group>
-      <FenceRun position={[-6.4, 0, -13.2]} length={8.2} />
-      <FenceRun position={[6.4, 0, -13.2]} length={8.2} />
-      <group position={[0, 0, -13.15]} scale={0.82}>
+      <FenceRun position={[-6.2, 0, -13.2]} length={6.8} />
+      <FenceRun position={[6.2, 0, -13.2]} length={6.8} />
+      <group position={[0, 0, -13.15]} scale={0.74}>
         <WoodenArch />
       </group>
 
       <HumanNPC id="paula" name="Paula" position={[-3.2, 0, -11.5]} variant="paula" onInteract={handlePaulaInteract} showQuestMarker={paulaMarker} />
-      <HumanNPC id="jam" name="Jam" position={[3.2, 0, -8.5]} variant="jam" onInteract={handleJamInteract} showQuestMarker={jamMarker} />
+      <HumanNPC id="jam" name="Jam" position={[3.2, 0, -11.5]} variant="jam" onInteract={handleJamInteract} showQuestMarker={jamMarker} />
 
       <WelcomeBasket opened={Boolean(worldFlags.welcome_basket)} />
       <InteractionAnchor
@@ -511,15 +512,17 @@ export function PawprintBay() {
 
       {/* Village green and picnic lawn. */}
       <PicnicBlanket />
-      <Tree position={[-5.5, 0, 4]} scale={1.45} blossom />
-      <Tree position={[10.5, 0, 4.5]} scale={1.3} />
-      <Bench position={[-6, 0, 0]} rotation={[0, Math.PI / 2, 0]} />
-      <Streetlamp position={[-4.5, 0, -5]} />
-      <Streetlamp position={[4.5, 0, -5]} />
-      <Campfire position={[11, 0, 9.5]} scale={0.85} />
-      <Crate position={[9.8, 0, 10.2]} scale={0.65} />
-      <Barrel position={[11.8, 0, 11]} scale={0.65} />
-      <Lantern position={[4.4, 0, 5]} />
+      <Tree position={[-6.7, 0, 5.2]} scale={1.25} blossom />
+      <Tree position={[8.8, 0, 6.4]} scale={1.15} />
+      <TerrainMound position={[-7.2, 0, 5.8]} radiusX={4.4} radiusZ={2.8} height={0.24} seed={82} material={grassMaterial} />
+      <TerrainMound position={[7.2, 0, 6.2]} radiusX={4.8} radiusZ={3.1} height={0.2} seed={91} material={grassMaterial} />
+      <Bench position={[-5.3, 0, 1.5]} rotation={[0, 0.12, 0]} />
+      <Fountain position={[-1, 0.06, 1]} scale={0.72} />
+      <Lantern position={[-2.6, 0, -6.2]} />
+      <Lantern position={[2.6, 0, -6.2]} />
+      <Campfire position={[9, 0, 8]} scale={0.78} />
+      <Crate position={[10.8, 0, 8.8]} scale={0.55} />
+      <Barrel position={[8.1, 0, 9.4]} scale={0.55} />
 
       {/* Market lane and garden neighborhood. */}
       <group position={[21, 0, -8]}>
@@ -575,7 +578,7 @@ export function PawprintBay() {
 
       {/* Clover Meadow — dense but readable gathering space. */}
       <group position={[18, 0, 17]}>
-        {[[-6, -4], [-3, 2], [0, -2], [3, 3], [6, -1], [1, 6], [-5, 6]].map(([x, z], index) => (
+        {[[-6, -4], [-2, 2], [3, 4], [5, -1], [0, 6], [-5, 6]].map(([x, z], index) => (
           <TallGrass key={`${x}-${z}`} position={[x, 0, z]} scale={0.8 + (index % 3) * 0.15} />
         ))}
         <FlowerBed position={[-4, 0, 0]} rotation={[0, 0.3, 0]} />
@@ -615,7 +618,6 @@ export function PawprintBay() {
         <TallGrass position={[4.8, 0, 4.6]} scale={0.8} />
         <TallGrass position={[5.6, 0, -2]} scale={0.7} />
         <Frog position={[-3, 0.15, 2]} />
-        <Frog position={[3, 0.15, -2]} />
         <Dragonfly position={[0, 1.5, 0]} pathRadius={5} />
         {[-5, -3, 4, 6].map((x, index) => <Mushroom key={x} position={[x, 0, index % 2 ? 6 : -6]} scale={0.7 + index * 0.08} color={index % 2 ? '#D96C5B' : '#E8A95B'} />)}
       </group>
@@ -694,8 +696,6 @@ export function PawprintBay() {
       {[[-33, 0, 18], [31, 0, 18], [30, 0, -19], [-32, 0, -22]].map((position, index) => (
         <Bush key={index} position={position as Position} scale={1.25 + index * 0.08} />
       ))}
-      <Lantern position={[-7, 0, 8]} />
-      <Lantern position={[11, 0, 1]} />
     </group>
   );
 }

@@ -3,7 +3,7 @@ import { useGameStore } from '../../store/useGameStore';
 
 const LANDMARKS: Record<string, { x: number; z: number; color: string; label: string }> = {
   Paula: { x: -3.2, z: -11.5, color: '#1D2E4D', label: 'Paula' },
-  Jam: { x: 3.2, z: -8.5, color: '#B6A184', label: 'Jam' },
+  Jam: { x: 3.2, z: -11.5, color: '#B6A184', label: 'Jam' },
   'Welcome Basket': { x: -1.7, z: -14.2, color: '#C58A2D', label: 'Welcome Basket' },
   Buttercup: { x: 18, z: 15, color: '#F6D35E', label: 'Clover Meadow Buttercup' },
   Bluebell: { x: -14, z: 20, color: '#83AEE0', label: 'Willow Pond Bluebell' },

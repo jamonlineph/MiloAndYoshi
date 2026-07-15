@@ -204,9 +204,9 @@ export const cliffMaterial = makeTerrainMaterial({
 
 export const plazaMaterial = makeTerrainMaterial({
   name: 'Pawprint plaza stone',
-  dark: [136, 120, 100],
-  light: [178, 159, 132],
-  accent: [202, 185, 158],
+  dark: [112, 96, 82],
+  light: [157, 138, 113],
+  accent: [188, 163, 130],
   repeat: 5,
   roughness: 0.82,
   bumpScale: 0.065,

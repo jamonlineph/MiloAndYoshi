@@ -328,12 +328,12 @@ export function Lantern({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 
             {/* Pole */}
             <mesh position={[0, 1, 0]} castShadow receiveShadow>
                 <cylinderGeometry args={[0.04, 0.07, 2, 8]} />
-                <meshStandardMaterial color="#211814" roughness={0.7} metalness={0.8} />
+                <meshStandardMaterial color="#5B4638" roughness={0.82} metalness={0.35} />
             </mesh>
             {/* Pole base */}
             <mesh position={[0, 0.02, 0]} castShadow receiveShadow>
                 <cylinderGeometry args={[0.12, 0.14, 0.04, 8]} />
-                <meshStandardMaterial color="#211814" roughness={0.7} metalness={0.8} />
+                <meshStandardMaterial color="#5B4638" roughness={0.82} metalness={0.35} />
             </mesh>
             {/* Hanging chain — 3 small torus links */}
             {[0, 1, 2].map((i) => (
@@ -350,7 +350,7 @@ export function Lantern({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 
             {/* Lantern top cap */}
             <mesh position={[0, 2.3, 0]} castShadow>
                 <coneGeometry args={[0.18, 0.18, 4]} />
-                <meshStandardMaterial color="#211814" roughness={0.6} metalness={0.7} />
+                <meshStandardMaterial color="#5B4638" roughness={0.72} metalness={0.35} />
             </mesh>
             {/* Lantern glass body */}
             <mesh position={[0, 2.1, 0]} castShadow>
@@ -375,18 +375,18 @@ export function Lantern({ position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 
                     castShadow
                 >
                     <boxGeometry args={[0.015, 0.3, 0.015]} />
-                    <meshStandardMaterial color="#211814" metalness={0.7} roughness={0.5} />
+                    <meshStandardMaterial color="#5B4638" metalness={0.35} roughness={0.72} />
                 </mesh>
             ))}
             {/* Bottom ring */}
             <mesh position={[0, 1.95, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
                 <torusGeometry args={[0.15, 0.012, 6, 6]} />
-                <meshStandardMaterial color="#211814" metalness={0.7} roughness={0.5} />
+                <meshStandardMaterial color="#5B4638" metalness={0.35} roughness={0.72} />
             </mesh>
             {/* Top ring */}
             <mesh position={[0, 2.24, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow>
                 <torusGeometry args={[0.13, 0.012, 6, 6]} />
-                <meshStandardMaterial color="#211814" metalness={0.7} roughness={0.5} />
+                <meshStandardMaterial color="#5B4638" metalness={0.35} roughness={0.72} />
             </mesh>
             {/* Point light */}
             <pointLight ref={lightRef} position={[0, 2.1, 0]} color="#F6E5C8" intensity={0.5} distance={6} castShadow />

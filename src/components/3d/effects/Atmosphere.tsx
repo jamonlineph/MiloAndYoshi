@@ -5,10 +5,10 @@ import * as THREE from 'three';
 // ═══════════════════════════════════════════════════════════════════════════
 // Constants
 // ═══════════════════════════════════════════════════════════════════════════
-const DUST_COUNT = 400;
-const FIREFLY_COUNT = 60;
-const DANDELION_COUNT = 30;
-const WATER_SPARKLE_COUNT = 40;
+const DUST_COUNT = 160;
+const FIREFLY_COUNT = 36;
+const DANDELION_COUNT = 16;
+const WATER_SPARKLE_COUNT = 24;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cloud definitions — 12 clouds, each with 4–5 sub-spheres

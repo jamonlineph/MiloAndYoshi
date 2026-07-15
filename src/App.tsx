@@ -351,7 +351,7 @@ export default function App() {
             }}
           >
             <color attach="background" args={[scheme.bg]} />
-            <fog attach="fog" args={[scheme.fog, 34, 112]} />
+            <fog attach="fog" args={[scheme.fog, 42, 126]} />
             <RendererCalibration exposure={scheme.exposure} />
             <Sky
               distance={450000}
@@ -397,8 +397,8 @@ export default function App() {
                     <Lightformer form="ring" intensity={0.65} color={scheme.skyLight} scale={32} position={[14, 8, -18]} target={[0, 0, 0]} />
                   </Environment>
                   <EffectComposer multisampling={4}>
-                    <Bloom luminanceThreshold={0.92} luminanceSmoothing={0.7} intensity={0.55} mipmapBlur />
-                    <Vignette eskil={false} offset={0.2} darkness={0.52} />
+                    <Bloom luminanceThreshold={0.96} luminanceSmoothing={0.78} intensity={0.36} mipmapBlur />
+                    <Vignette eskil={false} offset={0.26} darkness={0.3} />
                   </EffectComposer>
                 </>
               )}
